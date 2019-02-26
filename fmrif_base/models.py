@@ -52,7 +52,7 @@ class FMRIFUserManager(BaseUserManager):
 
         user.set_password(password)
 
-        user.is_active = False
+        user.is_active = True
         user.is_staff = False
         user.is_superuser = False
 
