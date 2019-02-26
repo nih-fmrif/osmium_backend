@@ -176,12 +176,12 @@ class TestView(APIView):
     def get(self, request):
 
         user_data = {
-            'username': request.user['username'],
-            'employee_id': request.user['employee_id'],
-            'mail': request.user['mail'],
-            'first_name': request.user['first_name'],
-            'last_name': request.user['last_name'],
-            'user_principal_name': request.user['user_principal_name']
+            'username': request.user.username,
+            'employee_id': request.user.emoployee_id,
+            'mail': request.user.mail,
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+            'user_principal_name': request.user.user_principal_name
         }
 
         return Response(user_data)
