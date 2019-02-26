@@ -177,7 +177,7 @@ class TestView(APIView):
 
         user_data = {
             'username': request.user.username,
-            'employee_id': request.user.emoployee_id,
+            'employee_id': request.user.employee_id,
             'mail': request.user.mail,
             'first_name': request.user.first_name,
             'last_name': request.user.last_name,
