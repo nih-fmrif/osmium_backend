@@ -46,6 +46,6 @@ class FMRIFAuthentication(authentication.BaseAuthentication):
 
             else:
 
-                return None
+                raise exceptions.AuthenticationFailed("Unable to retrieve credentials from AD")
 
         return user, None
