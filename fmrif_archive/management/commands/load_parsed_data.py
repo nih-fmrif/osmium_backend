@@ -351,9 +351,13 @@ class Command(BaseCommand):
 
                                         if instance_metadata:
 
+                                            self.stdout.write('Reading {}'.format(instance_metadata))
+
                                             with open(instance_metadata, "rt") as im:
 
                                                 for line in im:
+
+                                                    self.stdout.write("Debug: {}".format(line))
 
                                                     fname, instance_meta = line.rstrip("\n").split("  ")
                                                     fname = fname.lstrip("./")
