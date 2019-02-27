@@ -289,6 +289,7 @@ class Command(BaseCommand):
                                         try:
 
                                             new_scan = MRScan.objects.create(
+                                                parent_exam=parent_exam,
                                                 name=scan_name,
                                                 num_files=scan_num_files,
                                                 series_date=series_date,
@@ -298,8 +299,6 @@ class Command(BaseCommand):
                                                 series_instance_uid=series_instance_uid,
                                                 series_number=series_number
                                             )
-
-                                            new_scan.parent_exam.set(parent_exam)
 
                                         except Error as e:
 
@@ -379,6 +378,7 @@ class Command(BaseCommand):
                                                 num_slices = dat['metadata'].get('num_slices', None)
 
                                             instances_to_create.append(DICOMInstance(
+                                                parent_scan=new_scan,
                                                 file_type='dicom',
                                                 filename=fname,
                                                 checksum=dat['checksum'],
@@ -394,7 +394,6 @@ class Command(BaseCommand):
                                             with transaction.atomic():
 
                                                 DICOMInstance.objects.bulk_create(instances_to_create)
-                                                new_scan.dicom_files.add(instances_to_create)
 
                                         except Error as e:
 
@@ -420,11 +419,10 @@ class Command(BaseCommand):
                                         try:
 
                                             new_subdir = FileCollection.objects.create(
+                                                parent_exam=parent_exam,
                                                 name=subdir_name,
                                                 num_files=subdir_num_files
                                             )
-
-                                            new_subdir.parent_exam.set(parent_exam)
 
                                         except Error as e:
 
@@ -464,6 +462,7 @@ class Command(BaseCommand):
                                         for fname, dat in subdir_data.items():
 
                                             subdir_instances_to_create.append(File(
+                                                parent_collection=new_subdir,
                                                 file_type='other',
                                                 filename=fname,
                                                 checksum=dat['checksum']
@@ -474,7 +473,6 @@ class Command(BaseCommand):
                                             with transaction.atomic():
 
                                                 File.objects.bulk_create(subdir_instances_to_create)
-                                                new_subdir.files.add(subdir_instances_to_create)
 
                                         except Error as e:
 
