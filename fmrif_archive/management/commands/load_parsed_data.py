@@ -289,7 +289,6 @@ class Command(BaseCommand):
                                         try:
 
                                             new_scan = MRScan.objects.create(
-                                                parent_exam=parent_exam,
                                                 name=scan_name,
                                                 num_files=scan_num_files,
                                                 series_date=series_date,
@@ -299,6 +298,8 @@ class Command(BaseCommand):
                                                 series_instance_uid=series_instance_uid,
                                                 series_number=series_number
                                             )
+
+                                            new_scan.parent_exam.set(parent_exam)
 
                                         except Error as e:
 
@@ -419,10 +420,11 @@ class Command(BaseCommand):
                                         try:
 
                                             new_subdir = FileCollection.objects.create(
-                                                parent_exam=parent_exam,
                                                 name=subdir_name,
                                                 num_files=subdir_num_files
                                             )
+
+                                            new_subdir.parent_exam.set(parent_exam)
 
                                         except Error as e:
 
