@@ -22,13 +22,13 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
 
-        parser.add_argument("--scanners", nargs="*", type="str", default=[])
+        parser.add_argument("--scanners", nargs="*", type=str, default=[])
 
-        parser.add_argument("--years", nargs="*", type="str", default=[])
+        parser.add_argument("--years", nargs="*", type=str, default=[])
 
-        parser.add_argument("--months", nargs="*", type="str", default=[])
+        parser.add_argument("--months", nargs="*", type=str, default=[])
 
-        parser.add_argument("--days", nargs="*", type="str", default=[])
+        parser.add_argument("--days", nargs="*", type=str, default=[])
 
     def handle(self, *args, **options):
 
