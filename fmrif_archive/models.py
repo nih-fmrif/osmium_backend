@@ -104,7 +104,7 @@ class BaseFile(models.Model):
 
     file_type = models.CharField(max_length=5, choices=FILE_TYPES, default='other')
     filename = models.CharField(max_length=255)
-    checksum = models.CharField(max_length=32, unique=True, null=True)
+    checksum = models.CharField(max_length=32, null=True)
 
     class Meta:
         abstract = True
