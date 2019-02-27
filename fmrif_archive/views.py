@@ -167,3 +167,21 @@ class MRScanView(APIView):
         scan = self.get_object(exam_id=exam_id, scan_name=scan_name, version=version)
         serializer = MRScanSerializer(scan)
         return Response(serializer.data)
+
+
+class TestView(APIView):
+
+    permission_classes = (HasActiveAccount,)
+
+    def get(self, request):
+
+        user_data = {
+            'username': request.user.username,
+            'employee_id': request.user.employee_id,
+            'mail': request.user.mail,
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+            'user_principal_name': request.user.user_principal_name
+        }
+
+        return Response(user_data)

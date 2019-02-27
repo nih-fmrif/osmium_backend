@@ -52,7 +52,7 @@ class FMRIFUserManager(BaseUserManager):
 
         user.set_password(password)
 
-        user.is_active = False
+        user.is_active = True
         user.is_staff = False
         user.is_superuser = False
 
@@ -169,12 +169,12 @@ class Institute(models.Model):
 class ResearchGroup(Group):
 
     # 'permissions' ManyToMany field to Permissions model is inherited
+    # 'name' CharField (max_length=150) inherited
 
     code = models.CharField(max_length=15, primary_key=True)
-    name = models.CharField(max_length=255)
     # Old name if there was a change when moving to new archive
     old_name = models.CharField(max_length=255, blank=True, null=True)
-    short_name = models.CharField(max_length=15)
+    short_name = models.CharField(max_length=255)
     principal_investigator = models.ForeignKey(settings.AUTH_USER_MODEL,
                                                on_delete=models.PROTECT,
                                                related_name='groups_led',
@@ -189,17 +189,17 @@ class ResearchGroup(Group):
     is_active = models.BooleanField(default=True)
 
 
-class AccessRequest(models.Model):
-
-    STATUS_CHOICES = (
-        ('in_progress', 'in_progress'),
-        ('approved', 'approved'),
-        ('denied', 'denied'),
-    )
-
-    applicant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='applicant')
-    sponsor_group = models.ForeignKey(ResearchGroup, on_delete=models.CASCADE, related_name='sponsor_group')
-    application_key = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    application_status = models.CharField(default='in_progress', choices=STATUS_CHOICES, max_length=8)
-    last_updated = models.DateTimeField(auto_now=True)
-    summary = models.TextField(blank=True)
+# class AccessRequest(models.Model):
+#
+#     STATUS_CHOICES = (
+#         ('in_progress', 'in_progress'),
+#         ('approved', 'approved'),
+#         ('denied', 'denied'),
+#     )
+#
+#     applicant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='applicant')
+#     sponsor_group = models.ForeignKey(ResearchGroup, on_delete=models.CASCADE, related_name='sponsor_group')
+#     application_key = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+#     application_status = models.CharField(default='in_progress', choices=STATUS_CHOICES, max_length=8)
+#     last_updated = models.DateTimeField(auto_now=True)
+#     summary = models.TextField(blank=True)

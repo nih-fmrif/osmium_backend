@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "osmium_backend.settings.bromine")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "osmium_backend.settings.osmium")
 
 application = get_wsgi_application()
