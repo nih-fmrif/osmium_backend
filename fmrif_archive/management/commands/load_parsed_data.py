@@ -359,7 +359,7 @@ class Command(BaseCommand):
 
                                                     self.stdout.write("Debug: {}".format(line))
 
-                                                    fname, instance_meta = line.rstrip("\n").split("  ")
+                                                    fname, instance_meta = line.rstrip("\n").split("\t")
                                                     fname = fname.lstrip("./")
 
                                                     if "readme" not in fname.lower():
