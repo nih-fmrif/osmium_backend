@@ -32,7 +32,7 @@ class Exam(models.Model):
     # Exam ID is the checksum of the ***ORIGINAL*** exam archive in TGZ format as obtained from
     # Oxygen. Any derivatives of the exam would have the SAME exam id as the original, but different
     # version number. "exam_id" and "version" together should be unique when considered as a pair.
-    exam_id = models.CharField(max_length=32, editable=False)
+    exam_id = models.CharField(max_length=64, editable=False)
     revision = models.PositiveSmallIntegerField(default=1, editable=False)
     created_on = models.DateTimeField(default=timezone.now, editable=False)
     parser_version = models.CharField(max_length=10, editable=False)
