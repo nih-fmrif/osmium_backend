@@ -167,7 +167,7 @@ class Command(BaseCommand):
                                         accession_number = None
 
                                     try:
-                                        name = dicom_data["00100010"]['Value'][0]
+                                        name = dicom_data["00100010"]['Value'][0]['Alphabetic']
                                     except (KeyError, IndexError):
                                         name = None
 
