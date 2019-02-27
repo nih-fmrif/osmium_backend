@@ -79,7 +79,7 @@ class BaseFileCollection(models.Model):
 class MRScan(BaseFileCollection):
     """Representation of minimal metadata for an MRI scan conducted during an exam at the FMRIF"""
 
-    parent_exam = models.ManyToManyField(Exam, related_name='mr_scans')
+    parent_exam = models.ForeignKey(Exam, related_name='mr_scans', on_delete=models.PROTECT)
 
     series_date = models.DateField(null=True)
     series_time = models.TimeField(null=True)
@@ -88,14 +88,10 @@ class MRScan(BaseFileCollection):
     series_instance_uid = models.CharField(max_length=64, null=True)
     series_number = models.CharField(max_length=12, null=True)
 
-    dicom_files = models.ManyToManyField('DICOMInstance', related_name='parent_mr_scan')
-
 
 class FileCollection(BaseFileCollection):
 
-    parent_exam = models.ManyToManyField(Exam, related_name='other_data')
-
-    files = models.ManyToManyField('File', related_name='parent_collection')
+    parent_exam = models.ForeignKey(Exam, related_name='other_data', on_delete=models.PROTECT)
 
 
 class BaseFile(models.Model):
@@ -124,6 +120,9 @@ class DICOMInstance(BaseFile):
     num_indices = models.IntegerField(null=True)
     num_slices = models.IntegerField(null=True)
 
+    parent_scan = models.ForeignKey('MRScan', related_name='dicom_files', on_delete=models.PROTECT)
+
 
 class File(BaseFile):
-    pass
+
+    parent_collection = models.ForeignKey('FileCollection', related_name='files', on_delete=models.PROTECT)
