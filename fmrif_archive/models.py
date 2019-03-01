@@ -115,10 +115,9 @@ class DICOMInstance(BaseFile):
     sop_instance_uid = models.CharField(max_length=64, null=True)
 
     # Minimal metadata for GE scans
-    slice_indexes = JSONField(null=True)
+    echo_number = models.PositiveSmallIntegerField(null=True)
+    slice_index = models.PositiveIntegerField(null=True)
     image_position_patient = JSONField(null=True)
-    num_indices = models.IntegerField(null=True)
-    num_slices = models.IntegerField(null=True)
 
     parent_scan = models.ForeignKey('MRScan', related_name='dicom_files', on_delete=models.PROTECT)
 
