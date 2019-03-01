@@ -367,30 +367,31 @@ class Command(BaseCommand):
 
                                         for fname, dat in instance_data.items():
 
+                                            echo_number = None
                                             sop_instance_uid = None
-                                            slice_indexes = None
+                                            slice_index = None
                                             image_position_patient = None
-                                            num_indices = None
-                                            num_slices = None
 
                                             if dat['metadata']:
+
+                                                echo_number = dat['metadata'].get('echo_number', None)
+
                                                 sop_instance_uid = dat['metadata'].get('sop_instance_uid', None)
-                                                slice_indexes = dat['metadata'].get('slice_indexes', None)
+
+                                                slice_index = dat['metadata'].get('raw_data_run_number', None)
+
                                                 image_position_patient = dat['metadata'].get('image_position_patient',
                                                                                              None)
-                                                num_indices = dat['metadata'].get('num_indices', None)
-                                                num_slices = dat['metadata'].get('num_slices', None)
 
                                             instances_to_create.append(DICOMInstance(
                                                 parent_scan=new_scan,
                                                 file_type='dicom',
                                                 filename=fname,
                                                 checksum=dat['checksum'],
+                                                echo_number=echo_number,
                                                 sop_instance_uid=sop_instance_uid,
-                                                slice_indexes=slice_indexes,
-                                                image_position_patient=image_position_patient,
-                                                num_indices=num_indices,
-                                                num_slices=num_slices,
+                                                slice_index=slice_index,
+                                                image_position_patient=image_position_patient
                                             ))
 
                                         try:
