@@ -39,7 +39,7 @@ class Exam(models.Model):
 
     # Original filename and MD5 checksum of TGZ archive as stored in Oxygen/Gold
     filepath = models.TextField(unique=True, editable=False)
-    checksum = models.CharField(max_length=32, unique=True, editable=False)
+    checksum = models.CharField(max_length=32, editable=False)
 
     # Basic exam metadata
     station_name = models.CharField(max_length=10, blank=True, null=True, choices=SCANNER_CHOICES)
