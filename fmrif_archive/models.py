@@ -69,7 +69,7 @@ class Exam(models.Model):
 class BaseFileCollection(models.Model):
     """Abstract base model for representing a collection of files such as scans or RT data"""
 
-    name = models.CharField(max_length=25, editable=False)
+    name = models.CharField(max_length=255, editable=False)
     num_files = models.PositiveIntegerField()
 
     class Meta:
