@@ -21,7 +21,7 @@ class Command(BaseCommand):
 
     help = 'Load metadata and checksum for individual DICOM files obtained from Oxygen/Gold archives'
 
-    def process_dicom_instances(self, parent_exam, instance_files, dicom_instances_to_create):
+    def process_dicom_instances(self, parent_exam, instance_files):
 
         checksum_file = instance_files[0]
         metadata_file = instance_files[1]
@@ -94,12 +94,9 @@ class Command(BaseCommand):
                 )
             )
 
-            if new_dicom_instances:
-                dicom_instances_to_create.extend(new_dicom_instances)
+            return new_dicom_instances
 
-    def process_file_instances(self, parent_exam, instance_file, file_instances_to_create):
-
-        checksum_file = instance_file
+    def process_file_instances(self, parent_exam, checksum_file):
 
         scan_name = checksum_file.name.replace("_checksum.txt", "").split("_scan_")[-1]
 
@@ -110,7 +107,7 @@ class Command(BaseCommand):
 
         subdir_data = {}
 
-        with open(instance_file, "rt") as checksums:
+        with open(checksum_file, "rt") as checksums:
 
             for line in checksums:
 
@@ -135,8 +132,7 @@ class Command(BaseCommand):
                 )
             )
 
-        if new_file_instances:
-            file_instances_to_create.extend(new_file_instances)
+        return new_file_instances
 
     def add_arguments(self, parser):
 
@@ -265,9 +261,6 @@ class Command(BaseCommand):
                                     for cf in non_dicom_checksums:
                                         file_instances.append(cf)
 
-                                    self.stdout.write("Length DICOM Instances: {}".format(len(dicom_instances)))
-                                    self.stdout.write("Length File Instances: {}".format(len(file_instances)))
-
                                     if dicom_instances:
 
                                         dicom_instances_to_create = []
@@ -285,17 +278,23 @@ class Command(BaseCommand):
                                                     executor.submit(
                                                         self.process_dicom_instances,
                                                         parent_exam,
-                                                        dicom_instance,
-                                                        dicom_instances_to_create
+                                                        dicom_instance
                                                     )
                                                 )
 
-                                        self.stdout.write("waiting for futures completion")
+                                        self.stdout.write("Waiting for futures completion")
                                         self.stdout.flush()
+
                                         for future in as_completed(futures):
-                                            error = future.result()
-                                            if error:
-                                                self.stdout.write(error)
+
+                                            result = future.result()
+
+                                            if result:
+                                                if type(result) == str:
+                                                    self.stdout.write(result)
+                                                    self.stdout.flush()
+                                                else:
+                                                    dicom_instances_to_create.extend(result)
 
                                         if dicom_instances_to_create:
 
@@ -335,14 +334,19 @@ class Command(BaseCommand):
                                                         self.process_file_instances,
                                                         parent_exam=parent_exam,
                                                         instance_file=file_instance,
-                                                        file_instances_to_create=file_instances_to_create
                                                     )
                                                 )
 
                                         for future in as_completed(futures):
-                                            error = future.result()
-                                            if error:
-                                                self.stdout.write(error)
+
+                                            result = future.result()
+
+                                            if result:
+                                                if type(result) == str:
+                                                    self.stdout.write(result)
+                                                    self.stdout.flush()
+                                                else:
+                                                    file_instances_to_create.extend(result)
 
                                         if file_instances_to_create:
 
