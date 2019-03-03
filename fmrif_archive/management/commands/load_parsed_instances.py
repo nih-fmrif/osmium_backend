@@ -26,7 +26,7 @@ class Command(BaseCommand):
         checksum_file = instance_files[0]
         metadata_file = instance_files[1]
 
-        self.stdout.write("Processing {}".format(instance_files))
+        self.stdout.write("Processing {}".format(instance_files), flush=True)
 
         scan_name = checksum_file.name.replace("_checksum.txt", "").split("_scan_")[-1]
 
@@ -274,6 +274,8 @@ class Command(BaseCommand):
 
                                         with ProcessPoolExecutor(max_workers=4) as executor:
 
+                                            self.stdout.write("appending futures for dicom instances...")
+
                                             for dicom_instance in dicom_instances:
 
                                                 futures.append(
@@ -285,6 +287,7 @@ class Command(BaseCommand):
                                                     )
                                                 )
 
+                                        self.stdout.write("waiting for futures completion")
                                         for future in as_completed(futures):
                                             error = future.result()
                                             if error:
