@@ -27,6 +27,7 @@ class Command(BaseCommand):
         metadata_file = instance_files[1]
 
         self.stdout.write("Processing {}".format(instance_files))
+        self.stdout.flush()
 
         scan_name = checksum_file.name.replace("_checksum.txt", "").split("_scan_")[-1]
 
@@ -278,6 +279,7 @@ class Command(BaseCommand):
 
                                                 self.stdout.write("appending instance "
                                                                   "{}/{}".format(i, len(dicom_instances)))
+                                                self.stdout.flush()
 
                                                 futures.append(
                                                     executor.submit(
@@ -289,6 +291,7 @@ class Command(BaseCommand):
                                                 )
 
                                         self.stdout.write("waiting for futures completion")
+                                        self.stdout.flush()
                                         for future in as_completed(futures):
                                             error = future.result()
                                             if error:
