@@ -302,7 +302,7 @@ class Command(BaseCommand):
                                             series_number = None
 
                                         mr_scans_to_create.append(
-                                            MRScan.objects.create(
+                                            MRScan(
                                                 parent_exam=parent_exam,
                                                 name=scan_name,
                                                 num_files=scan_num_files,
@@ -351,7 +351,7 @@ class Command(BaseCommand):
                                             continue
 
                                         other_subdirs_to_create.append(
-                                            FileCollection.objects.create(
+                                            FileCollection(
                                                 parent_exam=parent_exam,
                                                 name=subdir_name,
                                                 num_files=subdir_num_files
