@@ -26,6 +26,8 @@ class Command(BaseCommand):
         checksum_file = instance_files[0]
         metadata_file = instance_files[1]
 
+        self.stdout.write("Processing {}".format(instance_files))
+
         scan_name = checksum_file.name.replace("_checksum.txt", "").split("_scan_")[-1]
 
         try:
