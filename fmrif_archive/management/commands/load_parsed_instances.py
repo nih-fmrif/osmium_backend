@@ -58,6 +58,8 @@ class Command(BaseCommand):
                 if "readme" not in filename.lower():
                     instances_data[filename]['metadata'] = json.loads(instance_meta)
 
+        new_dicom_instances = []
+
         for filename, data in instances_data.items():
 
             echo_number = None
@@ -76,7 +78,7 @@ class Command(BaseCommand):
                 image_position_patient = data['metadata'].get('image_position_patient',
                                                               None)
 
-            dicom_instances_to_create.append(
+            new_dicom_instances.append(
                 DICOMInstance(
                     parent_scan=curr_scan,
                     file_type='dicom',
@@ -88,6 +90,9 @@ class Command(BaseCommand):
                     image_position_patient=image_position_patient
                 )
             )
+
+            if new_dicom_instances:
+                dicom_instances_to_create.extend(new_dicom_instances)
 
     def process_file_instances(self, parent_exam, instance_file, file_instances_to_create):
 
@@ -114,9 +119,11 @@ class Command(BaseCommand):
                         'checksum': checksum
                     }
 
+        new_file_instances = []
+
         for filename, data in subdir_data.items():
 
-            file_instances_to_create.append(
+            new_file_instances.append(
                 File(
                     parent_collection=curr_subdir,
                     file_type='other',
@@ -124,6 +131,9 @@ class Command(BaseCommand):
                     checksum=data['checksum']
                 )
             )
+
+        if new_file_instances:
+            file_instances_to_create.extend(new_file_instances)
 
     def add_arguments(self, parser):
 
