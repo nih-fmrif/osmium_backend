@@ -236,7 +236,7 @@ class Command(BaseCommand):
 
                                     except PgWarning as w:
 
-                                        self.stdout.write("Postgres Warning processing {}".format(study_meta_file))
+                                        self.stdout.write("Warning: Postgres warning processing {}".format(study_meta_file))
                                         self.stdout.write(w)
                                         self.stdout.write(traceback.format_exc())
 
@@ -325,7 +325,7 @@ class Command(BaseCommand):
 
                                         except PgWarning as w:
 
-                                            self.stdout.write("Postgres Warning processing scan "
+                                            self.stdout.write("Warning: Postgres warning processing scan "
                                                               "{} of exam {}".format(scan_name, study_meta_file))
                                             self.stdout.write(w)
                                             self.stdout.write(traceback.format_exc())
