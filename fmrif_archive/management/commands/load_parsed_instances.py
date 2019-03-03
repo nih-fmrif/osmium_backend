@@ -89,7 +89,7 @@ def process_dicom_instances(parent_exam, instance_files):
     return metadata_file, new_dicom_instances
 
 
-def process_file_instances(self, parent_exam, checksum_file):
+def process_file_instances(parent_exam, checksum_file):
 
     scan_name = checksum_file.name.replace("_checksum.txt", "").split("_scan_")[-1]
 
