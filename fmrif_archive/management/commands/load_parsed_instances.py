@@ -279,87 +279,87 @@ class Command(BaseCommand):
                                                 self.stdout.write("appending instance "
                                                                   "{}/{}".format(i, len(dicom_instances)))
 
-                                                futures.append(
-                                                    executor.submit(
-                                                        self.process_dicom_instances,
-                                                        parent_exam=parent_exam,
-                                                        instance_files=dicom_instance,
-                                                        dicom_instances_to_create=dicom_instances_to_create
-                                                    )
-                                                )
-
-                                        self.stdout.write("waiting for futures completion")
-                                        for future in as_completed(futures):
-                                            error = future.result()
-                                            if error:
-                                                self.stdout.write(error)
-
-                                        if dicom_instances_to_create:
-
-                                            try:
-
-                                                self.stdout.write("Writing DICOMInstance objects for "
-                                                                  "exam {}".format(study_meta_file))
-
-                                                DICOMInstance.objects.bulk_create(dicom_instances_to_create)
-
-                                            except (DjangoDBError, PgError) as e:
-
-                                                self.stdout.write("Warning: Unable to create "
-                                                                  "DICOMInstance objects for "
-                                                                  "exam {}".format(study_meta_file))
-                                                self.stdout.write(e)
-                                                self.stdout.write(traceback.format_exc())
-
-                                            except PgWarning as w:
-
-                                                self.stdout.write("Warning: Postgres warning creating "
-                                                                  "DICOMInstance objects for "
-                                                                  "exam {}".format(study_meta_file))
-                                                self.stdout.write(w)
-                                                self.stdout.write(traceback.format_exc())
-
-                                    if file_instances:
-
-                                        file_instances_to_create = []
-                                        futures = []
-
-                                        with ProcessPoolExecutor(max_workers=4) as executor:
-
-                                            for file_instance in file_instances:
-                                                futures.append(
-                                                    executor.submit(
-                                                        self.process_file_instances,
-                                                        parent_exam=parent_exam,
-                                                        instance_file=file_instance,
-                                                        file_instances_to_create=file_instances_to_create
-                                                    )
-                                                )
-
-                                        for future in as_completed(futures):
-                                            error = future.result()
-                                            if error:
-                                                self.stdout.write(error)
-
-                                        if file_instances_to_create:
-
-                                            try:
-
-                                                self.stdout.write("Writing File objects for "
-                                                                  "exam {}".format(study_meta_file))
-
-                                                File.objects.bulk_create(file_instances_to_create)
-
-                                            except (DjangoDBError, PgError) as e:
-
-                                                self.stdout.write("Warning: Unable to create "
-                                                                  "File objects for exam {}".format(study_meta_file))
-                                                self.stdout.write(e)
-                                                self.stdout.write(traceback.format_exc())
-
-                                            except PgWarning as w:
-
-                                                self.stdout.write("Warning: Postgres warning creating "
-                                                                  "File objects for exam {}".format(study_meta_file))
-                                                self.stdout.write(w)
-                                                self.stdout.write(traceback.format_exc())
+                                    #             futures.append(
+                                    #                 executor.submit(
+                                    #                     self.process_dicom_instances,
+                                    #                     parent_exam=parent_exam,
+                                    #                     instance_files=dicom_instance,
+                                    #                     dicom_instances_to_create=dicom_instances_to_create
+                                    #                 )
+                                    #             )
+                                    #
+                                    #     self.stdout.write("waiting for futures completion")
+                                    #     for future in as_completed(futures):
+                                    #         error = future.result()
+                                    #         if error:
+                                    #             self.stdout.write(error)
+                                    #
+                                    #     if dicom_instances_to_create:
+                                    #
+                                    #         try:
+                                    #
+                                    #             self.stdout.write("Writing DICOMInstance objects for "
+                                    #                               "exam {}".format(study_meta_file))
+                                    #
+                                    #             DICOMInstance.objects.bulk_create(dicom_instances_to_create)
+                                    #
+                                    #         except (DjangoDBError, PgError) as e:
+                                    #
+                                    #             self.stdout.write("Warning: Unable to create "
+                                    #                               "DICOMInstance objects for "
+                                    #                               "exam {}".format(study_meta_file))
+                                    #             self.stdout.write(e)
+                                    #             self.stdout.write(traceback.format_exc())
+                                    #
+                                    #         except PgWarning as w:
+                                    #
+                                    #             self.stdout.write("Warning: Postgres warning creating "
+                                    #                               "DICOMInstance objects for "
+                                    #                               "exam {}".format(study_meta_file))
+                                    #             self.stdout.write(w)
+                                    #             self.stdout.write(traceback.format_exc())
+                                    #
+                                    # if file_instances:
+                                    #
+                                    #     file_instances_to_create = []
+                                    #     futures = []
+                                    #
+                                    #     with ProcessPoolExecutor(max_workers=4) as executor:
+                                    #
+                                    #         for file_instance in file_instances:
+                                    #             futures.append(
+                                    #                 executor.submit(
+                                    #                     self.process_file_instances,
+                                    #                     parent_exam=parent_exam,
+                                    #                     instance_file=file_instance,
+                                    #                     file_instances_to_create=file_instances_to_create
+                                    #                 )
+                                    #             )
+                                    #
+                                    #     for future in as_completed(futures):
+                                    #         error = future.result()
+                                    #         if error:
+                                    #             self.stdout.write(error)
+                                    #
+                                    #     if file_instances_to_create:
+                                    #
+                                    #         try:
+                                    #
+                                    #             self.stdout.write("Writing File objects for "
+                                    #                               "exam {}".format(study_meta_file))
+                                    #
+                                    #             File.objects.bulk_create(file_instances_to_create)
+                                    #
+                                    #         except (DjangoDBError, PgError) as e:
+                                    #
+                                    #             self.stdout.write("Warning: Unable to create "
+                                    #                               "File objects for exam {}".format(study_meta_file))
+                                    #             self.stdout.write(e)
+                                    #             self.stdout.write(traceback.format_exc())
+                                    #
+                                    #         except PgWarning as w:
+                                    #
+                                    #             self.stdout.write("Warning: Postgres warning creating "
+                                    #                               "File objects for exam {}".format(study_meta_file))
+                                    #             self.stdout.write(w)
+                                    #             self.stdout.write(traceback.format_exc())
