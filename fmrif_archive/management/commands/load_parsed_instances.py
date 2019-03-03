@@ -3,7 +3,6 @@ import traceback
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from django.db import Error as DjangoDBError
 from psycopg2 import Error as PgError
 from psycopg2 import Warning as PgWarning
@@ -261,120 +260,84 @@ class Command(BaseCommand):
 
                                     if dicom_instances:
 
-                                        futures = []
+                                        for dicom_instance in dicom_instances:
 
-                                        with ProcessPoolExecutor(max_workers=4) as executor:
+                                            result = process_dicom_instances(parent_exam, dicom_instance)
 
-                                            for i, dicom_instance in enumerate(dicom_instances, 1):
+                                            if type(result) == str:
 
-                                                self.stdout.write("Appending DICOM Instances "
-                                                                  "{}/{}".format(i, len(dicom_instances)))
-                                                self.stdout.flush()
+                                                self.stdout.write(result)
 
-                                                futures.append(
-                                                    executor.submit(
-                                                        process_dicom_instances,
-                                                        parent_exam,
-                                                        dicom_instance
-                                                    )
-                                                )
+                                            else:
 
-                                        self.stdout.write("Waiting for futures completion")
-                                        self.stdout.flush()
+                                                metadata_file = result[0]
+                                                new_dicom_instances = result[1]
 
-                                        for future in as_completed(futures):
+                                                try:
 
-                                            result = future.result()
+                                                    self.stdout.write("Writing DICOMInstance "
+                                                                      "objects for metadata file {} "
+                                                                      "of exam {}".format(metadata_file,
+                                                                                          study_meta_file))
 
-                                            if result:
+                                                    DICOMInstance.objects.bulk_create(new_dicom_instances)
 
-                                                if type(result) == str:
-                                                    self.stdout.write(result)
-                                                    self.stdout.flush()
+                                                except (DjangoDBError, PgError) as e:
 
-                                                elif result[1]:
+                                                    self.stdout.write("Warning: Unable to write "
+                                                                      "DICOMInstance objects for "
+                                                                      "metadata file {} "
+                                                                      "of exam {}".format(metadata_file,
+                                                                                          study_meta_file))
+                                                    self.stdout.write(e)
+                                                    self.stdout.write(traceback.format_exc())
 
-                                                    metadata_file = result[0]
-                                                    new_dicom_instances = result[1]
+                                                except PgWarning as w:
 
-                                                    try:
-
-                                                        self.stdout.write("Writing DICOMInstance "
-                                                                          "objects for metadata file {} "
-                                                                          "of exam {}".format(metadata_file,
-                                                                                              study_meta_file))
-
-                                                        DICOMInstance.objects.bulk_create(new_dicom_instances)
-
-                                                    except (DjangoDBError, PgError) as e:
-
-                                                        self.stdout.write("Warning: Unable to write "
-                                                                          "DICOMInstance objects for "
-                                                                          "metadata file {} "
-                                                                          "of exam {}".format(metadata_file,
-                                                                                              study_meta_file))
-                                                        self.stdout.write(e)
-                                                        self.stdout.write(traceback.format_exc())
-
-                                                    except PgWarning as w:
-
-                                                        self.stdout.write("Warning: Postgres warning creating "
-                                                                          "DICOMInstance objects for metadata "
-                                                                          "file {} of exam {}".format(metadata_file,
-                                                                                                      study_meta_file))
-                                                        self.stdout.write(w)
-                                                        self.stdout.write(traceback.format_exc())
+                                                    self.stdout.write("Warning: Postgres warning creating "
+                                                                      "DICOMInstance objects for metadata "
+                                                                      "file {} of exam {}".format(metadata_file,
+                                                                                                  study_meta_file))
+                                                    self.stdout.write(w)
+                                                    self.stdout.write(traceback.format_exc())
 
                                     if file_instances:
 
-                                        futures = []
+                                        for file_instance in file_instances:
 
-                                        with ProcessPoolExecutor(max_workers=4) as executor:
+                                            result = process_file_instances(parent_exam, file_instance)
 
-                                            for file_instance in file_instances:
-                                                futures.append(
-                                                    executor.submit(
-                                                        process_file_instances,
-                                                        parent_exam,
-                                                        file_instance,
-                                                    )
-                                                )
+                                            if type(result) == str:
 
-                                        for future in as_completed(futures):
+                                                self.stdout.write(result)
 
-                                            result = future.result()
+                                            else:
 
-                                            if result:
-                                                if type(result) == str:
-                                                    self.stdout.write(result)
-                                                    self.stdout.flush()
-                                                elif result[1]:
+                                                checksum_file = result[0]
+                                                new_file_instances = result[1]
 
-                                                    checksum_file = result[0]
-                                                    new_file_instances = result[1]
+                                                try:
 
-                                                    try:
+                                                    self.stdout.write("Writing File objects for checksum file {} "
+                                                                      "of exam {}".format(checksum_file,
+                                                                                          study_meta_file))
 
-                                                        self.stdout.write("Writing File objects for checksum file {} "
-                                                                          "of exam {}".format(checksum_file,
-                                                                                              study_meta_file))
+                                                    File.objects.bulk_create(new_file_instances)
 
-                                                        File.objects.bulk_create(new_file_instances)
+                                                except (DjangoDBError, PgError) as e:
 
-                                                    except (DjangoDBError, PgError) as e:
+                                                    self.stdout.write("Warning: Unable to create "
+                                                                      "File objects checksum file {} "
+                                                                      "of exam {}".format(checksum_file,
+                                                                                          study_meta_file))
+                                                    self.stdout.write(e)
+                                                    self.stdout.write(traceback.format_exc())
 
-                                                        self.stdout.write("Warning: Unable to create "
-                                                                          "File objects checksum file {} "
-                                                                          "of exam {}".format(checksum_file,
-                                                                                                study_meta_file))
-                                                        self.stdout.write(e)
-                                                        self.stdout.write(traceback.format_exc())
+                                                except PgWarning as w:
 
-                                                    except PgWarning as w:
-
-                                                        self.stdout.write("Warning: Postgres warning creating "
-                                                                          "File objects for checksum file {} of "
-                                                                          "exam {}".format(checksum_file,
-                                                                                            study_meta_file))
-                                                        self.stdout.write(w)
-                                                        self.stdout.write(traceback.format_exc())
+                                                    self.stdout.write("Warning: Postgres warning creating "
+                                                                      "File objects for checksum file {} of "
+                                                                      "exam {}".format(checksum_file,
+                                                                                       study_meta_file))
+                                                    self.stdout.write(w)
+                                                    self.stdout.write(traceback.format_exc())
