@@ -3,7 +3,10 @@ import traceback
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from django.db import Error, transaction
+from django.db import transaction
+from django.db import Error as DjangoDBError
+from psycopg2 import Error as PgError
+from psycopg2 import Warning as PgWarning
 from pathlib import Path
 from fmrif_archive.models import (
     Exam,
@@ -45,7 +48,7 @@ class Command(BaseCommand):
             scanner_paths = [scanner_path for scanner_path in parsed_data_path.iterdir()
                              if (scanner_path.is_dir() and scanner_path.name in scanners)]
 
-        for scanner_path in scanner_paths:
+        for scanner_path in sorted(scanner_paths):
 
             if not years:
                 year_paths = [year_path for year_path in scanner_path.iterdir() if year_path.is_dir()]
@@ -53,7 +56,7 @@ class Command(BaseCommand):
                 year_paths = [year_path for year_path in scanner_path.iterdir()
                               if (year_path.is_dir() and year_path.name in years)]
 
-            for year_path in year_paths:
+            for year_path in sorted(year_paths):
 
                 if not months:
                     month_paths = [month_path for month_path in year_path.iterdir() if month_path.is_dir()]
@@ -61,7 +64,7 @@ class Command(BaseCommand):
                     month_paths = [month_path for month_path in year_path.iterdir()
                                    if (month_path.is_dir() and month_path.name in months)]
 
-                for month_path in month_paths:
+                for month_path in sorted(month_paths):
 
                     if not days:
                         day_paths = [day_path for day_path in month_path.iterdir() if day_path.is_dir()]
@@ -69,33 +72,37 @@ class Command(BaseCommand):
                         day_paths = [day_path for day_path in month_path.iterdir()
                                      if (day_path.is_dir() and day_path.name in days)]
 
-                    for day_path in day_paths:
+                    for day_path in sorted(day_paths):
 
-                        for exam_id in [e for e in day_path.iterdir() if e.is_dir()]:
+                        for exam_id in sorted([e for e in day_path.iterdir() if e.is_dir()]):
 
-                            for pt_dir in [p for p in exam_id.iterdir() if p.is_dir()]:
+                            for pt_dir in sorted([p for p in exam_id.iterdir() if p.is_dir()]):
 
-                                for session_dir in [s for s in pt_dir.iterdir() if s.is_dir()]:
+                                for session_dir in sorted([s for s in pt_dir.iterdir() if s.is_dir()]):
 
-                                    study_metadata_file = list(session_dir.glob("study_*_metadata.txt"))
+                                    study_metadata_files = list(session_dir.glob("study_*_metadata.txt"))
 
-                                    if not study_metadata_file:
+                                    if not study_metadata_files:
                                         self.stdout.write("Error: No study metadata found in {}".format(session_dir))
                                         continue
 
-                                    if len(study_metadata_file) > 1:
+                                    if len(study_metadata_files) > 1:
                                         self.stdout.write("Error: Multiple study metadata "
                                                           "files for {} found".format(session_dir))
                                         continue
 
-                                    study_meta_file = study_metadata_file[0]
+                                    study_meta_file = study_metadata_files[0]
+
+                                    if not study_meta_file.is_file():
+                                        self.stdout.write("Error: Cannot load file {}".format(study_meta_file))
+                                        continue
 
                                     self.stdout.write("Loading data from {}".format(str(study_meta_file)))
 
                                     try:
                                         with open(str(study_meta_file), "rt") as sm:
                                             study_metadata = json.load(sm)
-                                    except:
+                                    except ValueError:
                                         self.stdout.write("Error: Cannot load file {}".format(study_meta_file))
                                         continue
 
@@ -218,7 +225,7 @@ class Command(BaseCommand):
                                             birth_date=birth_date
                                         )
 
-                                    except Error as e:
+                                    except (DjangoDBError, PgError) as e:
 
                                         self.stdout.write("Error: Unable to create exam model "
                                                           "for {}".format(study_meta_file))
@@ -226,6 +233,12 @@ class Command(BaseCommand):
                                         self.stdout.write(traceback.format_exc())
 
                                         continue
+
+                                    except PgWarning as w:
+
+                                        self.stdout.write("Postgres Warning processing {}".format(study_meta_file))
+                                        self.stdout.write(w)
+                                        self.stdout.write(traceback.format_exc())
 
                                     mr_scans = []
                                     other_data = []
@@ -300,7 +313,7 @@ class Command(BaseCommand):
                                                 series_number=series_number
                                             )
 
-                                        except Error as e:
+                                        except (DjangoDBError, PgError) as e:
 
                                             self.stdout.write("Error: Unable to create MRScan model "
                                                               "for scan {} of exam {}".format(scan_name,
@@ -310,182 +323,213 @@ class Command(BaseCommand):
 
                                             continue
 
-                                        # Get the DICOM Instance Metadata and Checksums for the current scan
+                                        except PgWarning as w:
 
-                                        instances_to_create = []
-
-                                        instance_checksum = list(session_dir.glob(
-                                            "*_scan_{}_checksum.txt".format(scan_name)))
-
-                                        if len(instance_checksum) != 1:
-                                            self.stdout.write("Error: Missing or multiple "
-                                                              "scan checksum files for scan {}".format(scan_name))
-                                            continue
-
-                                        instance_checksum = str(instance_checksum[0])
-
-                                        instance_metadata = list(session_dir.glob(
-                                            "*_scan_{}_metadata.txt".format(scan_name)))
-
-                                        if len(instance_metadata) != 1:
-                                            self.stdout.write("Warning: Missing or multiple "
-                                                              "scan metadata files for scan {}".format(scan_name))
-                                            instance_metadata = None
-                                        else:
-                                            instance_metadata = str(instance_metadata[0])
-
-                                        instance_data = {}
-
-                                        with open(instance_checksum, "rt") as checksums:
-
-                                            self.stdout.write('Reading {}'.format(instance_checksum))
-
-                                            for line in checksums:
-
-                                                checksum, fname = line.rstrip("\n").split("  ")
-                                                fname = fname.lstrip("./")
-
-                                                if "readme" not in fname.lower():
-                                                    instance_data[fname] = {
-                                                        'checksum': checksum,
-                                                        'metadata': None,
-                                                    }
-
-                                        if instance_metadata:
-
-                                            self.stdout.write('Reading {}'.format(instance_metadata))
-
-                                            with open(instance_metadata, "rt") as im:
-
-                                                for line in im:
-
-                                                    fname, instance_meta = line.rstrip("\n").split("\t")
-                                                    fname = fname.lstrip("./")
-
-                                                    if "readme" not in fname.lower():
-                                                        instance_data[fname]['metadata'] = json.loads(instance_meta)
-
-                                        for fname, dat in instance_data.items():
-
-                                            echo_number = None
-                                            sop_instance_uid = None
-                                            slice_index = None
-                                            image_position_patient = None
-
-                                            if dat['metadata']:
-
-                                                echo_number = dat['metadata'].get('echo_number', None)
-
-                                                sop_instance_uid = dat['metadata'].get('sop_instance_uid', None)
-
-                                                slice_index = dat['metadata'].get('raw_data_run_number', None)
-
-                                                image_position_patient = dat['metadata'].get('image_position_patient',
-                                                                                             None)
-
-                                            instances_to_create.append(DICOMInstance(
-                                                parent_scan=new_scan,
-                                                file_type='dicom',
-                                                filename=fname,
-                                                checksum=dat['checksum'],
-                                                echo_number=echo_number,
-                                                sop_instance_uid=sop_instance_uid,
-                                                slice_index=slice_index,
-                                                image_position_patient=image_position_patient
-                                            ))
-
-                                        try:
-
-                                            with transaction.atomic():
-
-                                                DICOMInstance.objects.bulk_create(instances_to_create)
-
-                                        except Error as e:
-
-                                            self.stdout.write("Warning: Unable to create "
-                                                              "DICOM instances for "
-                                                              "scan {} in exam {}".format(scan_name, study_meta_file))
-                                            self.stdout.write(e)
+                                            self.stdout.write("Postgres Warning processing scan "
+                                                              "{} of exam {}".format(scan_name, study_meta_file))
+                                            self.stdout.write(w)
                                             self.stdout.write(traceback.format_exc())
 
-                                    for subdir in other_data:
-
-                                        parent_exam = exam
-
-                                        try:
-                                            subdir_metadata = subdir['metadata']
-                                            subdir_name = subdir_metadata['gold_scan_dir']
-                                            subdir_num_files = subdir_metadata['num_files']
-                                        except KeyError:
-                                            self.stdout.write("Error: Missing mandatory scan metadata, "
-                                                              "omitting scan from exam {}".format(study_meta_file))
-                                            continue
-
-                                        try:
-
-                                            new_subdir = FileCollection.objects.create(
-                                                parent_exam=parent_exam,
-                                                name=subdir_name,
-                                                num_files=subdir_num_files
-                                            )
-
-                                        except Error as e:
-
-                                            self.stdout.write("Error: Unable to create "
-                                                              "FileCollection model for subdir "
-                                                              "{} of exam {}".format(subdir_name, study_meta_file))
-                                            self.stdout.write(e)
-                                            self.stdout.write(traceback.format_exc())
-                                            continue
-
-                                        subdir_checksum = list(session_dir.glob(
-                                            "*_scan_{}_checksum.txt".format(subdir_name)))
-
-                                        if len(subdir_checksum) != 1:
-                                            self.stdout.write("Error: Missing or multiple "
-                                                              "scan checksum files for scan {}".format(subdir_name))
-                                            continue
-
-                                        subdir_checksum = str(subdir_checksum[0])
-
-                                        subdir_data = {}
-
-                                        with open(subdir_checksum, "rt") as checksums:
-
-                                            self.stdout.write('Reading {}'.format(subdir_checksum))
-
-                                            for line in checksums:
-
-                                                checksum, fname = line.rstrip("\n").split("  ")
-                                                fname = fname.lstrip("./")
-
-                                                if "readme" not in fname.lower():
-                                                    subdir_data[fname] = {
-                                                        'checksum': checksum
-                                                    }
-
-                                        subdir_instances_to_create = []
-
-                                        for fname, dat in subdir_data.items():
-
-                                            subdir_instances_to_create.append(File(
-                                                parent_collection=new_subdir,
-                                                file_type='other',
-                                                filename=fname,
-                                                checksum=dat['checksum']
-                                            ))
-
-                                        try:
-
-                                            with transaction.atomic():
-
-                                                File.objects.bulk_create(subdir_instances_to_create)
-
-                                        except Error as e:
-
-                                            self.stdout.write("Warning: Unable to create "
-                                                              "File instances for "
-                                                              "subdir {} in exam {}".format(subdir_name,
-                                                                                            study_meta_file))
-                                            self.stdout.write(e)
-                                            self.stdout.write(traceback.format_exc())
+                                    #     # Get the DICOM Instance Metadata and Checksums for the current scan
+                                    #
+                                    #     instances_to_create = []
+                                    #
+                                    #     instance_checksum = list(session_dir.glob(
+                                    #         "*_scan_{}_checksum.txt".format(scan_name)))
+                                    #
+                                    #     if len(instance_checksum) != 1:
+                                    #         self.stdout.write("Error: Missing or multiple "
+                                    #                           "scan checksum files for scan {}".format(scan_name))
+                                    #         continue
+                                    #
+                                    #     instance_checksum = str(instance_checksum[0])
+                                    #
+                                    #     instance_metadata = list(session_dir.glob(
+                                    #         "*_scan_{}_metadata.txt".format(scan_name)))
+                                    #
+                                    #     if len(instance_metadata) != 1:
+                                    #         self.stdout.write("Warning: Missing or multiple "
+                                    #                           "scan metadata files for scan {}".format(scan_name))
+                                    #         instance_metadata = None
+                                    #     else:
+                                    #         instance_metadata = str(instance_metadata[0])
+                                    #
+                                    #     instance_data = {}
+                                    #
+                                    #     with open(instance_checksum, "rt") as checksums:
+                                    #
+                                    #         self.stdout.write('Reading {}'.format(instance_checksum))
+                                    #
+                                    #         for line in checksums:
+                                    #
+                                    #             checksum, fname = line.rstrip("\n").split("  ")
+                                    #             fname = fname.lstrip("./")
+                                    #
+                                    #             if "readme" not in fname.lower():
+                                    #                 instance_data[fname] = {
+                                    #                     'checksum': checksum,
+                                    #                     'metadata': None,
+                                    #                 }
+                                    #
+                                    #     if instance_metadata:
+                                    #
+                                    #         self.stdout.write('Reading {}'.format(instance_metadata))
+                                    #
+                                    #         with open(instance_metadata, "rt") as im:
+                                    #
+                                    #             for line in im:
+                                    #
+                                    #                 fname, instance_meta = line.rstrip("\n").split("\t")
+                                    #                 fname = fname.lstrip("./")
+                                    #
+                                    #                 if "readme" not in fname.lower():
+                                    #                     instance_data[fname]['metadata'] = json.loads(instance_meta)
+                                    #
+                                    #     for fname, dat in instance_data.items():
+                                    #
+                                    #         echo_number = None
+                                    #         sop_instance_uid = None
+                                    #         slice_index = None
+                                    #         image_position_patient = None
+                                    #
+                                    #         if dat['metadata']:
+                                    #
+                                    #             echo_number = dat['metadata'].get('echo_number', None)
+                                    #
+                                    #             sop_instance_uid = dat['metadata'].get('sop_instance_uid', None)
+                                    #
+                                    #             slice_index = dat['metadata'].get('raw_data_run_number', None)
+                                    #
+                                    #             image_position_patient = dat['metadata'].get('image_position_patient',
+                                    #                                                          None)
+                                    #
+                                    #         instances_to_create.append(DICOMInstance(
+                                    #             parent_scan=new_scan,
+                                    #             file_type='dicom',
+                                    #             filename=fname,
+                                    #             checksum=dat['checksum'],
+                                    #             echo_number=echo_number,
+                                    #             sop_instance_uid=sop_instance_uid,
+                                    #             slice_index=slice_index,
+                                    #             image_position_patient=image_position_patient
+                                    #         ))
+                                    #
+                                    #     try:
+                                    #
+                                    #         with transaction.atomic():
+                                    #
+                                    #             DICOMInstance.objects.bulk_create(instances_to_create)
+                                    #
+                                    #     except (DjangoDBError, PgError) as e:
+                                    #
+                                    #         self.stdout.write("Warning: Unable to create "
+                                    #                           "DICOM instances for "
+                                    #                           "scan {} in exam {}".format(scan_name, study_meta_file))
+                                    #         self.stdout.write(e)
+                                    #         self.stdout.write(traceback.format_exc())
+                                    #
+                                    #     except PgWarning as w:
+                                    #
+                                    #         self.stdout.write("Postgres Warning processing DICOM instances for "
+                                    #                           "scan {} in exam {}".format(scan_name, study_meta_file))
+                                    #         self.stdout.write(w)
+                                    #         self.stdout.write(traceback.format_exc())
+                                    #
+                                    # for subdir in other_data:
+                                    #
+                                    #     parent_exam = exam
+                                    #
+                                    #     try:
+                                    #         subdir_metadata = subdir['metadata']
+                                    #         subdir_name = subdir_metadata['gold_scan_dir']
+                                    #         subdir_num_files = subdir_metadata['num_files']
+                                    #     except KeyError:
+                                    #         self.stdout.write("Error: Missing mandatory scan metadata, "
+                                    #                           "omitting scan from exam {}".format(study_meta_file))
+                                    #         continue
+                                    #
+                                    #     try:
+                                    #
+                                    #         new_subdir = FileCollection.objects.create(
+                                    #             parent_exam=parent_exam,
+                                    #             name=subdir_name,
+                                    #             num_files=subdir_num_files
+                                    #         )
+                                    #
+                                    #     except (DjangoDBError, PgError) as e:
+                                    #
+                                    #         self.stdout.write("Error: Unable to create "
+                                    #                           "FileCollection model for subdir "
+                                    #                           "{} of exam {}".format(subdir_name, study_meta_file))
+                                    #         self.stdout.write(e)
+                                    #         self.stdout.write(traceback.format_exc())
+                                    #
+                                    #         continue
+                                    #
+                                    #     except PgWarning as w:
+                                    #
+                                    #         self.stdout.write("Postgres Warning creating "
+                                    #                           "FileCollection model for subdir "
+                                    #                           "{} of exam {}".format(subdir_name, study_meta_file))
+                                    #         self.stdout.write(w)
+                                    #         self.stdout.write(traceback.format_exc())
+                                    #
+                                    #     subdir_checksum = list(session_dir.glob(
+                                    #         "*_scan_{}_checksum.txt".format(subdir_name)))
+                                    #
+                                    #     if len(subdir_checksum) != 1:
+                                    #         self.stdout.write("Error: Missing or multiple "
+                                    #                           "scan checksum files for scan {}".format(subdir_name))
+                                    #         continue
+                                    #
+                                    #     subdir_checksum = str(subdir_checksum[0])
+                                    #
+                                    #     subdir_data = {}
+                                    #
+                                    #     with open(subdir_checksum, "rt") as checksums:
+                                    #
+                                    #         self.stdout.write('Reading {}'.format(subdir_checksum))
+                                    #
+                                    #         for line in checksums:
+                                    #
+                                    #             checksum, fname = line.rstrip("\n").split("  ")
+                                    #             fname = fname.lstrip("./")
+                                    #
+                                    #             if "readme" not in fname.lower():
+                                    #                 subdir_data[fname] = {
+                                    #                     'checksum': checksum
+                                    #                 }
+                                    #
+                                    #     subdir_instances_to_create = []
+                                    #
+                                    #     for fname, dat in subdir_data.items():
+                                    #
+                                    #         subdir_instances_to_create.append(File(
+                                    #             parent_collection=new_subdir,
+                                    #             file_type='other',
+                                    #             filename=fname,
+                                    #             checksum=dat['checksum']
+                                    #         ))
+                                    #
+                                    #     try:
+                                    #
+                                    #         with transaction.atomic():
+                                    #
+                                    #             File.objects.bulk_create(subdir_instances_to_create)
+                                    #
+                                    #     except (DjangoDBError, PgError) as e:
+                                    #
+                                    #         self.stdout.write("Warning: Unable to create "
+                                    #                           "File instances for "
+                                    #                           "subdir {} of exam {}".format(subdir_name,
+                                    #                                                         study_meta_file))
+                                    #         self.stdout.write(e)
+                                    #         self.stdout.write(traceback.format_exc())
+                                    #
+                                    #     except PgWarning as w:
+                                    #
+                                    #         self.stdout.write("Warning: Postgres warning creating "
+                                    #                           "File instances for subdir "
+                                    #                           "{} of exam {}".format(subdir_name, study_meta_file))
+                                    #         self.stdout.write(w)
+                                    #         self.stdout.write(traceback.format_exc())
