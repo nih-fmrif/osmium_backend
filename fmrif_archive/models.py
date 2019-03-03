@@ -83,7 +83,7 @@ class MRScan(BaseFileCollection):
 
     series_date = models.DateField(null=True)
     series_time = models.TimeField(null=True)
-    series_description = models.CharField(max_length=64, null=True)
+    series_description = models.CharField(max_length=255, null=True)
     sop_class_uid = models.CharField(max_length=64, null=True)
     series_instance_uid = models.CharField(max_length=64, null=True)
     series_number = models.CharField(max_length=12, null=True)
