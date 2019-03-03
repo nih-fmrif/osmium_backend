@@ -252,13 +252,15 @@ class Command(BaseCommand):
                                     for cf in non_dicom_checksums:
                                         file_instances.append(cf)
 
+                                    self.stdout.write("Dicom Instances: {}".format(dicom_instances))
+                                    self.stdout.write("File Instances: {}".format(file_instances))
+
                                     if dicom_instances:
 
                                         dicom_instances_to_create = []
+                                        futures = []
 
                                         with ProcessPoolExecutor(max_workers=4) as executor:
-
-                                            futures = []
 
                                             for dicom_instance in dicom_instances:
 
@@ -271,12 +273,17 @@ class Command(BaseCommand):
                                                     )
                                                 )
 
-                                            for future in as_completed(futures):
-                                                error = future.result()
-                                                if error:
-                                                    self.stdout.write(error)
+                                        for future in as_completed(futures):
+                                            error = future.result()
+                                            if error:
+                                                self.stdout.write(error)
+
+                                        if dicom_instances_to_create:
 
                                             try:
+
+                                                self.stdout.write("Writing DICOMInstance objects for "
+                                                                  "exam {}".format(study_meta_file))
 
                                                 DICOMInstance.objects.bulk_create(dicom_instances_to_create)
 
@@ -299,27 +306,31 @@ class Command(BaseCommand):
                                     if file_instances:
 
                                         file_instances_to_create = []
+                                        futures = []
 
                                         with ProcessPoolExecutor(max_workers=4) as executor:
 
-                                            futures = []
-
-                                            for dicom_instance in dicom_instances:
+                                            for file_instance in file_instances:
                                                 futures.append(
                                                     executor.submit(
                                                         self.process_file_instances,
                                                         parent_exam=parent_exam,
-                                                        instance_file=dicom_instance,
+                                                        instance_file=file_instance,
                                                         file_instances_to_create=file_instances_to_create
                                                     )
                                                 )
 
-                                            for future in as_completed(futures):
-                                                error = future.result()
-                                                if error:
-                                                    self.stdout.write(error)
+                                        for future in as_completed(futures):
+                                            error = future.result()
+                                            if error:
+                                                self.stdout.write(error)
+
+                                        if file_instances_to_create:
 
                                             try:
+
+                                                self.stdout.write("Writing File objects for "
+                                                                  "exam {}".format(study_meta_file))
 
                                                 File.objects.bulk_create(file_instances_to_create)
 
