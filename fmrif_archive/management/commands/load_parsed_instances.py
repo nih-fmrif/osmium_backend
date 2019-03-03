@@ -277,7 +277,7 @@ class Command(BaseCommand):
                                             for i, dicom_instance in enumerate(dicom_instances, 1):
 
                                                 self.stdout.write("appending instance "
-                                                                  "{}/{}".format(i, len(dicom_instances)))
+                                                                  "{}/{}".format(i, len(dicom_instances)), flush=True)
 
                                                 futures.append(
                                                     executor.submit(
