@@ -26,7 +26,7 @@ class Command(BaseCommand):
         checksum_file = instance_files[0]
         metadata_file = instance_files[1]
 
-        self.stdout.write("Processing {}".format(instance_files), flush=True)
+        self.stdout.write("Processing {}".format(instance_files))
 
         scan_name = checksum_file.name.replace("_checksum.txt", "").split("_scan_")[-1]
 
@@ -264,7 +264,7 @@ class Command(BaseCommand):
                                     for cf in non_dicom_checksums:
                                         file_instances.append(cf)
 
-                                    self.stdout.write("Length Dicom Instances: {}".format(len(dicom_instances)))
+                                    self.stdout.write("Length DICOM Instances: {}".format(len(dicom_instances)))
                                     self.stdout.write("Length File Instances: {}".format(len(file_instances)))
 
                                     if dicom_instances:
@@ -277,7 +277,7 @@ class Command(BaseCommand):
                                             for i, dicom_instance in enumerate(dicom_instances, 1):
 
                                                 self.stdout.write("appending instance "
-                                                                  "{}/{}".format(i, len(dicom_instances)), flush=True)
+                                                                  "{}/{}".format(i, len(dicom_instances)))
 
                                                 futures.append(
                                                     executor.submit(
