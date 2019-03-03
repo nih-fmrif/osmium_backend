@@ -85,7 +85,7 @@ def process_dicom_instances(parent_exam, instance_files):
             )
         )
 
-    return metadata_file, new_dicom_instances
+    return new_dicom_instances
 
 
 def process_file_instances(parent_exam, checksum_file):
@@ -124,7 +124,7 @@ def process_file_instances(parent_exam, checksum_file):
             )
         )
 
-    return checksum_file, new_file_instances
+    return new_file_instances
 
 
 class Command(BaseCommand):
@@ -260,6 +260,8 @@ class Command(BaseCommand):
 
                                     if dicom_instances:
 
+                                        dicom_instances_to_create = []
+
                                         for dicom_instance in dicom_instances:
 
                                             result = process_dicom_instances(parent_exam, dicom_instance)
@@ -270,38 +272,34 @@ class Command(BaseCommand):
 
                                             else:
 
-                                                metadata_file = result[0]
-                                                new_dicom_instances = result[1]
+                                                dicom_instances_to_create.extend(result)
 
-                                                try:
+                                        try:
 
-                                                    self.stdout.write("Writing DICOMInstance "
-                                                                      "objects for metadata file {} "
-                                                                      "of exam {}".format(metadata_file,
-                                                                                          study_meta_file))
+                                            self.stdout.write("Writing DICOMInstance "
+                                                              "objects forexam {}".format(study_meta_file))
 
-                                                    DICOMInstance.objects.bulk_create(new_dicom_instances)
+                                            DICOMInstance.objects.bulk_create(dicom_instances_to_create)
 
-                                                except (DjangoDBError, PgError) as e:
+                                        except (DjangoDBError, PgError) as e:
 
-                                                    self.stdout.write("Warning: Unable to write "
-                                                                      "DICOMInstance objects for "
-                                                                      "metadata file {} "
-                                                                      "of exam {}".format(metadata_file,
-                                                                                          study_meta_file))
-                                                    self.stdout.write(e)
-                                                    self.stdout.write(traceback.format_exc())
+                                            self.stdout.write("Warning: Unable to write "
+                                                              "DICOMInstance objects for "
+                                                              "exam {}".format(study_meta_file))
+                                            self.stdout.write(e)
+                                            self.stdout.write(traceback.format_exc())
 
-                                                except PgWarning as w:
+                                        except PgWarning as w:
 
-                                                    self.stdout.write("Warning: Postgres warning creating "
-                                                                      "DICOMInstance objects for metadata "
-                                                                      "file {} of exam {}".format(metadata_file,
-                                                                                                  study_meta_file))
-                                                    self.stdout.write(w)
-                                                    self.stdout.write(traceback.format_exc())
+                                            self.stdout.write("Warning: Postgres warning creating "
+                                                              "DICOMInstance objects for "
+                                                              "exam {}".format(study_meta_file))
+                                            self.stdout.write(w)
+                                            self.stdout.write(traceback.format_exc())
 
                                     if file_instances:
+
+                                        file_instances_to_create = []
 
                                         for file_instance in file_instances:
 
@@ -313,31 +311,25 @@ class Command(BaseCommand):
 
                                             else:
 
-                                                checksum_file = result[0]
-                                                new_file_instances = result[1]
+                                                file_instances_to_create.extend(result)
 
-                                                try:
+                                        try:
 
-                                                    self.stdout.write("Writing File objects for checksum file {} "
-                                                                      "of exam {}".format(checksum_file,
-                                                                                          study_meta_file))
+                                            self.stdout.write("Writing File objects for "
+                                                              "exam {}".format(study_meta_file))
 
-                                                    File.objects.bulk_create(new_file_instances)
+                                            File.objects.bulk_create(file_instances_to_create)
 
-                                                except (DjangoDBError, PgError) as e:
+                                        except (DjangoDBError, PgError) as e:
 
-                                                    self.stdout.write("Warning: Unable to create "
-                                                                      "File objects checksum file {} "
-                                                                      "of exam {}".format(checksum_file,
-                                                                                          study_meta_file))
-                                                    self.stdout.write(e)
-                                                    self.stdout.write(traceback.format_exc())
+                                            self.stdout.write("Warning: Unable to create "
+                                                              "File objects for exam {}".format(study_meta_file))
+                                            self.stdout.write(e)
+                                            self.stdout.write(traceback.format_exc())
 
-                                                except PgWarning as w:
+                                        except PgWarning as w:
 
-                                                    self.stdout.write("Warning: Postgres warning creating "
-                                                                      "File objects for checksum file {} of "
-                                                                      "exam {}".format(checksum_file,
-                                                                                       study_meta_file))
-                                                    self.stdout.write(w)
-                                                    self.stdout.write(traceback.format_exc())
+                                            self.stdout.write("Warning: Postgres warning creating "
+                                                              "File objects for exam {}".format(study_meta_file))
+                                            self.stdout.write(w)
+                                            self.stdout.write(traceback.format_exc())
