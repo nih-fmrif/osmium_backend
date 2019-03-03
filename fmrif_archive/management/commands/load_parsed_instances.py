@@ -264,8 +264,8 @@ class Command(BaseCommand):
                                     for cf in non_dicom_checksums:
                                         file_instances.append(cf)
 
-                                    self.stdout.write("Dicom Instances: {}".format(dicom_instances))
-                                    self.stdout.write("File Instances: {}".format(file_instances))
+                                    self.stdout.write("Length Dicom Instances: {}".format(len(dicom_instances)))
+                                    self.stdout.write("Length File Instances: {}".format(len(file_instances)))
 
                                     if dicom_instances:
 
@@ -274,9 +274,10 @@ class Command(BaseCommand):
 
                                         with ProcessPoolExecutor(max_workers=4) as executor:
 
-                                            self.stdout.write("appending futures for dicom instances...")
+                                            for i, dicom_instance in enumerate(dicom_instances):
 
-                                            for dicom_instance in dicom_instances:
+                                                self.stdout.write("appending instance "
+                                                                  "{}/{}".format(i, len(dicom_instance)))
 
                                                 futures.append(
                                                     executor.submit(
