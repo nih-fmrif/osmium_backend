@@ -274,10 +274,10 @@ class Command(BaseCommand):
 
                                         with ProcessPoolExecutor(max_workers=4) as executor:
 
-                                            for i, dicom_instance in enumerate(dicom_instances):
+                                            for i, dicom_instance in enumerate(dicom_instances, 1):
 
                                                 self.stdout.write("appending instance "
-                                                                  "{}/{}".format(i, len(dicom_instance)))
+                                                                  "{}/{}".format(i, len(dicom_instances)))
 
                                                 futures.append(
                                                     executor.submit(
