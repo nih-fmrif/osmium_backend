@@ -17,122 +17,120 @@ from fmrif_archive.models import (
 )
 
 
+def process_dicom_instances(parent_exam, instance_files):
+
+    checksum_file = instance_files[0]
+    metadata_file = instance_files[1]
+
+    scan_name = checksum_file.name.replace("_checksum.txt", "").split("_scan_")[-1]
+
+    try:
+        curr_scan = MRScan.objects.get(parent_exam=parent_exam, name=scan_name)
+    except MRScan.DoesNotExist:
+        return "Error opening MRScan model for metadata file {}".format(metadata_file)
+
+    instances_data = {}
+
+    with open(checksum_file, "rt") as checksums:
+
+        for line in checksums:
+
+            checksum, filename = line.rstrip("\n").split("  ")
+            filename = filename.lstrip("./")
+
+            if "readme" not in filename.lower():
+                instances_data[filename] = {
+                    'checksum': checksum,
+                    'metadata': None,
+                }
+
+    with open(metadata_file, "rt") as meta_file:
+
+        for line in meta_file:
+
+            filename, instance_meta = line.rstrip("\n").split("\t")
+            filename = filename.lstrip("./")
+
+            if "readme" not in filename.lower():
+                instances_data[filename]['metadata'] = json.loads(instance_meta)
+
+    new_dicom_instances = []
+
+    for filename, data in instances_data.items():
+
+        echo_number = None
+        sop_instance_uid = None
+        slice_index = None
+        image_position_patient = None
+
+        if data['metadata']:
+            echo_number = data['metadata'].get('echo_number', None)
+
+            sop_instance_uid = data['metadata'].get('sop_instance_uid', None)
+
+            slice_index = data['metadata'].get('raw_data_run_number', None)
+
+            image_position_patient = data['metadata'].get('image_position_patient',
+                                                          None)
+
+        new_dicom_instances.append(
+            DICOMInstance(
+                parent_scan=curr_scan,
+                file_type='dicom',
+                filename=filename,
+                checksum=data['checksum'],
+                echo_number=echo_number,
+                sop_instance_uid=sop_instance_uid,
+                slice_index=slice_index,
+                image_position_patient=image_position_patient
+            )
+        )
+
+    return metadata_file, new_dicom_instances
+
+
+def process_file_instances(self, parent_exam, checksum_file):
+
+    scan_name = checksum_file.name.replace("_checksum.txt", "").split("_scan_")[-1]
+
+    try:
+        curr_subdir = FileCollection.objects.get(parent_exam=parent_exam, name=scan_name)
+    except FileCollection.DoesNotExist:
+        return "Error opening FileCollection model for checksum file {}".format(checksum_file)
+
+    subdir_data = {}
+
+    with open(checksum_file, "rt") as checksums:
+
+        for line in checksums:
+
+            checksum, filename = line.rstrip("\n").split("  ")
+            filename = filename.lstrip("./")
+
+            if "readme" not in filename.lower():
+                subdir_data[filename] = {
+                    'checksum': checksum
+                }
+
+    new_file_instances = []
+
+    for filename, data in subdir_data.items():
+
+        new_file_instances.append(
+            File(
+                parent_collection=curr_subdir,
+                file_type='other',
+                filename=filename,
+                checksum=data['checksum']
+            )
+        )
+
+    return checksum_file, new_file_instances
+
+
 class Command(BaseCommand):
 
     help = 'Load metadata and checksum for individual DICOM files obtained from Oxygen/Gold archives'
-
-    def process_dicom_instances(self, parent_exam, instance_files):
-
-        checksum_file = instance_files[0]
-        metadata_file = instance_files[1]
-
-        self.stdout.write("Processing {}".format(instance_files))
-        self.stdout.flush()
-
-        scan_name = checksum_file.name.replace("_checksum.txt", "").split("_scan_")[-1]
-
-        try:
-            curr_scan = MRScan.objects.get(parent_exam=parent_exam, name=scan_name)
-        except MRScan.DoesNotExist:
-            return "Error opening MRScan model for metadata file {}".format(metadata_file)
-
-        instances_data = {}
-
-        with open(checksum_file, "rt") as checksums:
-
-            for line in checksums:
-
-                checksum, filename = line.rstrip("\n").split("  ")
-                filename = filename.lstrip("./")
-
-                if "readme" not in filename.lower():
-                    instances_data[filename] = {
-                        'checksum': checksum,
-                        'metadata': None,
-                    }
-
-        with open(metadata_file, "rt") as meta_file:
-
-            for line in meta_file:
-
-                filename, instance_meta = line.rstrip("\n").split("\t")
-                filename = filename.lstrip("./")
-
-                if "readme" not in filename.lower():
-                    instances_data[filename]['metadata'] = json.loads(instance_meta)
-
-        new_dicom_instances = []
-
-        for filename, data in instances_data.items():
-
-            echo_number = None
-            sop_instance_uid = None
-            slice_index = None
-            image_position_patient = None
-
-            if data['metadata']:
-
-                echo_number = data['metadata'].get('echo_number', None)
-
-                sop_instance_uid = data['metadata'].get('sop_instance_uid', None)
-
-                slice_index = data['metadata'].get('raw_data_run_number', None)
-
-                image_position_patient = data['metadata'].get('image_position_patient',
-                                                              None)
-
-            new_dicom_instances.append(
-                DICOMInstance(
-                    parent_scan=curr_scan,
-                    file_type='dicom',
-                    filename=filename,
-                    checksum=data['checksum'],
-                    echo_number=echo_number,
-                    sop_instance_uid=sop_instance_uid,
-                    slice_index=slice_index,
-                    image_position_patient=image_position_patient
-                )
-            )
-
-            return new_dicom_instances
-
-    def process_file_instances(self, parent_exam, checksum_file):
-
-        scan_name = checksum_file.name.replace("_checksum.txt", "").split("_scan_")[-1]
-
-        try:
-            curr_subdir = FileCollection.objects.get(parent_exam=parent_exam, name=scan_name)
-        except FileCollection.DoesNotExist:
-            return "Error opening FileCollection model for checksum file {}".format(checksum_file)
-
-        subdir_data = {}
-
-        with open(checksum_file, "rt") as checksums:
-
-            for line in checksums:
-
-                checksum, filename = line.rstrip("\n").split("  ")
-                filename = filename.lstrip("./")
-
-                if "readme" not in filename.lower():
-                    subdir_data[filename] = {
-                        'checksum': checksum
-                    }
-
-        new_file_instances = []
-
-        for filename, data in subdir_data.items():
-
-            new_file_instances.append(
-                File(
-                    parent_collection=curr_subdir,
-                    file_type='other',
-                    filename=filename,
-                    checksum=data['checksum']
-                )
-            )
-
-        return new_file_instances
 
     def add_arguments(self, parser):
 
@@ -263,20 +261,19 @@ class Command(BaseCommand):
 
                                     if dicom_instances:
 
-                                        dicom_instances_to_create = []
                                         futures = []
 
                                         with ProcessPoolExecutor(max_workers=4) as executor:
 
                                             for i, dicom_instance in enumerate(dicom_instances, 1):
 
-                                                self.stdout.write("appending instance "
+                                                self.stdout.write("Appending DICOM Instances "
                                                                   "{}/{}".format(i, len(dicom_instances)))
                                                 self.stdout.flush()
 
                                                 futures.append(
                                                     executor.submit(
-                                                        self.process_dicom_instances,
+                                                        process_dicom_instances,
                                                         parent_exam,
                                                         dicom_instance
                                                     )
@@ -290,40 +287,46 @@ class Command(BaseCommand):
                                             result = future.result()
 
                                             if result:
+
                                                 if type(result) == str:
                                                     self.stdout.write(result)
                                                     self.stdout.flush()
-                                                else:
-                                                    dicom_instances_to_create.extend(result)
 
-                                        if dicom_instances_to_create:
+                                                elif result[1]:
 
-                                            try:
+                                                    metadata_file = result[0]
+                                                    new_dicom_instances = result[1]
 
-                                                self.stdout.write("Writing DICOMInstance objects for "
-                                                                  "exam {}".format(study_meta_file))
+                                                    try:
 
-                                                DICOMInstance.objects.bulk_create(dicom_instances_to_create)
+                                                        self.stdout.write("Writing DICOMInstance "
+                                                                          "objects for metadata file {} "
+                                                                          "of exam {}".format(metadata_file,
+                                                                                              study_meta_file))
 
-                                            except (DjangoDBError, PgError) as e:
+                                                        DICOMInstance.objects.bulk_create(new_dicom_instances)
 
-                                                self.stdout.write("Warning: Unable to create "
-                                                                  "DICOMInstance objects for "
-                                                                  "exam {}".format(study_meta_file))
-                                                self.stdout.write(e)
-                                                self.stdout.write(traceback.format_exc())
+                                                    except (DjangoDBError, PgError) as e:
 
-                                            except PgWarning as w:
+                                                        self.stdout.write("Warning: Unable to write "
+                                                                          "DICOMInstance objects for "
+                                                                          "metadata file {} "
+                                                                          "of exam {}".format(metadata_file,
+                                                                                              study_meta_file))
+                                                        self.stdout.write(e)
+                                                        self.stdout.write(traceback.format_exc())
 
-                                                self.stdout.write("Warning: Postgres warning creating "
-                                                                  "DICOMInstance objects for "
-                                                                  "exam {}".format(study_meta_file))
-                                                self.stdout.write(w)
-                                                self.stdout.write(traceback.format_exc())
+                                                    except PgWarning as w:
+
+                                                        self.stdout.write("Warning: Postgres warning creating "
+                                                                          "DICOMInstance objects for metadata "
+                                                                          "file {} of exam {}".format(metadata_file,
+                                                                                                      study_meta_file))
+                                                        self.stdout.write(w)
+                                                        self.stdout.write(traceback.format_exc())
 
                                     if file_instances:
 
-                                        file_instances_to_create = []
                                         futures = []
 
                                         with ProcessPoolExecutor(max_workers=4) as executor:
@@ -331,9 +334,9 @@ class Command(BaseCommand):
                                             for file_instance in file_instances:
                                                 futures.append(
                                                     executor.submit(
-                                                        self.process_file_instances,
-                                                        parent_exam=parent_exam,
-                                                        instance_file=file_instance,
+                                                        process_file_instances,
+                                                        parent_exam,
+                                                        file_instance,
                                                     )
                                                 )
 
@@ -345,28 +348,33 @@ class Command(BaseCommand):
                                                 if type(result) == str:
                                                     self.stdout.write(result)
                                                     self.stdout.flush()
-                                                else:
-                                                    file_instances_to_create.extend(result)
+                                                elif result[1]:
 
-                                        if file_instances_to_create:
+                                                    checksum_file = result[0]
+                                                    new_file_instances = result[1]
 
-                                            try:
+                                                    try:
 
-                                                self.stdout.write("Writing File objects for "
-                                                                  "exam {}".format(study_meta_file))
+                                                        self.stdout.write("Writing File objects for checksum file {} "
+                                                                          "of exam {}".format(checksum_file,
+                                                                                              study_meta_file))
 
-                                                File.objects.bulk_create(file_instances_to_create)
+                                                        File.objects.bulk_create(new_file_instances)
 
-                                            except (DjangoDBError, PgError) as e:
+                                                    except (DjangoDBError, PgError) as e:
 
-                                                self.stdout.write("Warning: Unable to create "
-                                                                  "File objects for exam {}".format(study_meta_file))
-                                                self.stdout.write(e)
-                                                self.stdout.write(traceback.format_exc())
+                                                        self.stdout.write("Warning: Unable to create "
+                                                                          "File objects checksum file {} "
+                                                                          "of exam {}".format(checksum_file,
+                                                                                                study_meta_file))
+                                                        self.stdout.write(e)
+                                                        self.stdout.write(traceback.format_exc())
 
-                                            except PgWarning as w:
+                                                    except PgWarning as w:
 
-                                                self.stdout.write("Warning: Postgres warning creating "
-                                                                  "File objects for exam {}".format(study_meta_file))
-                                                self.stdout.write(w)
-                                                self.stdout.write(traceback.format_exc())
+                                                        self.stdout.write("Warning: Postgres warning creating "
+                                                                          "File objects for checksum file {} of "
+                                                                          "exam {}".format(checksum_file,
+                                                                                            study_meta_file))
+                                                        self.stdout.write(w)
+                                                        self.stdout.write(traceback.format_exc())
