@@ -55,7 +55,7 @@ class Exam(models.Model):
     name = models.CharField(max_length=324, null=True)  # Alphabetic name as stored in DICOM header
     last_name = models.CharField(max_length=64, null=True)
     first_name = models.CharField(max_length=64, null=True)
-    patient_id = models.CharField(max_length=64)
+    patient_id = models.CharField(max_length=64, null=True)
     sex = models.CharField(max_length=1, null=True, choices=PT_SEX_CHOICES)
     birth_date = models.DateField(null=True)
 
