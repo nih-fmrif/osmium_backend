@@ -55,7 +55,7 @@ class BasicSearchView(generics.ListAPIView):
 
     def get_queryset(self):
 
-        queryset = Exam.objects.all().latest('version')
+        queryset = Exam.objects.all().latest('revision')
 
         patient_last_name = self.request.query_params.get('patient_last_name', None)
         if patient_last_name:
