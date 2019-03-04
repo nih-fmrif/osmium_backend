@@ -102,8 +102,7 @@ class GEMinimalMetaSerializer(serializers.ModelSerializer):
 
 class MRScanSerializer(serializers.ModelSerializer):
 
-    files = BaseFileSerializer(many=True, read_only=True)
-    minimal_metadata = GEMinimalMetaSerializer(read_only=True)
+    dicom_files = DICOMInstanceSerializer(many=True, read_only=True)
 
     class Meta:
 
@@ -112,27 +111,25 @@ class MRScanSerializer(serializers.ModelSerializer):
         fields = (
             'name',
             'num_files',
-            'files',
             'series_date',
             'series_time',
             'series_description',
             'sop_class_uid',
             'series_instance_uid',
             'series_number',
-            'minimal_metadata',
+            'dicom_files',
         )
 
         read_only_fields = (
             'name',
             'num_files',
-            'files',
             'series_date',
             'series_time',
             'series_description',
             'sop_class_uid',
             'series_instance_uid',
             'series_number',
-            'minimal_metadata',
+            'dicom_files',
         )
 
 
@@ -152,6 +149,8 @@ class BaseFileCollectionSerializer(serializers.ModelSerializer):
 
 class ExamSerializer(serializers.ModelSerializer):
 
+    mr_scans = False
+    other_data = False
     file_collections = BaseFileCollectionSerializer(many=True, read_only=True)
 
     class Meta:
@@ -160,10 +159,8 @@ class ExamSerializer(serializers.ModelSerializer):
 
         fields = (
             "exam_id",
-            "version",
-            "last_modified",
-            "oxygen_filename",
-            "oxygen_checksum",
+            "revision",
+            "created_on",
             "station_name",
             "study_instance_uid",
             "study_id",
@@ -176,18 +173,15 @@ class ExamSerializer(serializers.ModelSerializer):
             "first_name",
             "patient_id",
             "sex",
-            "weight",
-            "size",
             "birth_date",
-            "file_collections",
+            "mr_scans",
+            "other_data",
         )
 
         read_only_fields = (
             "exam_id",
-            "version",
-            "last_modified",
-            "oxygen_filename",
-            "oxygen_checksum",
+            "revision",
+            "created_on",
             "station_name",
             "study_instance_uid",
             "study_id",
@@ -200,8 +194,41 @@ class ExamSerializer(serializers.ModelSerializer):
             "first_name",
             "patient_id",
             "sex",
-            "weight",
-            "size",
             "birth_date",
-            "file_collections",
+            "mr_scans",
+            "other_data",
         )
+
+
+class ExamPreviewSerializer(serializers.ModelSerializer):
+
+    class Meta:
+
+        model = Exam
+
+        fields = (
+            "exam_id",
+            "revision",
+            "station_name",
+            "study_instance_uid",
+            "study_id",
+            "study_date",
+            "study_time",
+            "study_description",
+            "protocol",
+            "name",
+        )
+
+        read_only_fields = (
+            "exam_id",
+            "revision",
+            "station_name",
+            "study_instance_uid",
+            "study_id",
+            "study_date",
+            "study_time",
+            "study_description",
+            "protocol",
+            "name",
+        )
+

@@ -3,6 +3,7 @@ import os
 from django.http import HttpResponse
 from fmrif_archive.models import Exam, MRScan
 from fmrif_archive.serializers import (
+    ExamPreviewSerializer,
     ExamSerializer,
     MRScanSerializer,
 )
@@ -34,7 +35,7 @@ class BasicSearchView(generics.ListAPIView):
 
     permission_classes = (HasActiveAccount,)
 
-    serializer_class = ExamSerializer
+    serializer_class = ExamPreviewSerializer
     filter_backends = (
         filters.DjangoFilterBackend,
         RFWOrderingFilter,
@@ -42,8 +43,7 @@ class BasicSearchView(generics.ListAPIView):
     queryset = Exam.objects.all()
     pagination_class = ExamSearchResultTablePagination
     ordering_fields = (
-        'patient_last_name',
-        'patient_first_name',
+        'name',
         'study_date',
         'study_time',
         'station_name',
