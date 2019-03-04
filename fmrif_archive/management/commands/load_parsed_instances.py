@@ -277,7 +277,7 @@ class Command(BaseCommand):
                                         try:
 
                                             self.stdout.write("Writing DICOMInstance "
-                                                              "objects forexam {}".format(study_meta_file))
+                                                              "objects for exam {}".format(study_meta_file))
 
                                             DICOMInstance.objects.bulk_create(dicom_instances_to_create)
 

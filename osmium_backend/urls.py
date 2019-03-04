@@ -3,6 +3,6 @@ from django.urls import path, include
 
 urlpatterns = [
     # path('bromine/admin/', admin.site.urls),
-    # path('api/', include('fmrif_archive.urls', namespace='archive')),
-    path('', include('fmrif_archive.urls', namespace='archive'))
+    path('api/', include('fmrif_archive.urls', namespace='archive')),
+    # path('', include('fmrif_archive.urls', namespace='archive'))
 ]
