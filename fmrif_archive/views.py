@@ -11,8 +11,8 @@ from fmrif_archive.pagination import ExamSearchResultTablePagination
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.filters import OrderingFilter as RFWOrderingFilter
-from django_filters import rest_framework as filters
+from rest_framework.filters import OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
 from datetime import datetime
 from functools import reduce
@@ -37,8 +37,8 @@ class BasicSearchView(generics.ListAPIView):
 
     serializer_class = ExamPreviewSerializer
     filter_backends = (
-        filters.DjangoFilterBackend,
-        RFWOrderingFilter,
+        DjangoFilterBackend,
+        OrderingFilter,
     )
     queryset = Exam.objects.all()
     pagination_class = ExamSearchResultTablePagination
@@ -55,7 +55,7 @@ class BasicSearchView(generics.ListAPIView):
 
     def get_queryset(self):
 
-        queryset = Exam.objects.all().latest('revision')
+        queryset = Exam.objects.all()
 
         patient_last_name = self.request.query_params.get('patient_last_name', None)
         if patient_last_name:
