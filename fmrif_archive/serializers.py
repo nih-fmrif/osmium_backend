@@ -51,6 +51,7 @@ class MRScanSerializer(serializers.ModelSerializer):
         model = MRScan
 
         fields = (
+            'id',
             'name',
             'num_files',
             'series_date',
@@ -62,6 +63,7 @@ class MRScanSerializer(serializers.ModelSerializer):
         )
 
         read_only_fields = (
+            'id',
             'name',
             'num_files',
             'series_date',
@@ -80,11 +82,13 @@ class FileCollectionSerializer(serializers.ModelSerializer):
         model = FileCollection
 
         fields = (
+            'id',
             'name',
             'num_files',
         )
 
         read_only_fields = (
+            'id',
             'name',
             'num_files',
         )
