@@ -103,7 +103,7 @@ class ExamView(APIView):
 
     def get(self, request, exam_id, revision=None):
 
-        # logger = logging.getLogger('django.request')
+        logger = logging.getLogger('django.request')
 
         exam = self.get_object(exam_id=exam_id, revision=revision)
 
@@ -121,7 +121,7 @@ class ExamView(APIView):
 
             response['Content-Length'] = os.path.getsize(str(archive_fpath))
 
-            # logger.debug('x-accel-redir: {}'.format(response['X-Accel-Redirect']))
+            logger.debug('x-sendfile: {}'.format(response['X-Sendfile']))
 
             return response
 
