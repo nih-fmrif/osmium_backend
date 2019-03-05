@@ -3,8 +3,8 @@ from django.urls import path
 from fmrif_archive.views import (
     BasicSearchView,
     ExamView,
-    MRScanView,
-    TestView,
+    # MRScanView,
+    # TestView,
 )
 
 app_name = 'fmrif_archive'
