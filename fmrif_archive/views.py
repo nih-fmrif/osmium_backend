@@ -112,7 +112,7 @@ class ExamView(APIView):
         if exam and (download == 'dicom'):
 
             response = HttpResponse()
-            response["Content-Disposition"] = "attachment; filename={}".format(Path(exam.filepath).name)
+            response["Content-Disposition"] = 'attachment; filename="{}"'.format(Path(exam.filepath).name)
             response['Content-Type'] = "application/gzip"
 
             # archive_fpath = Path(settings.ARCHIVE_BASE_PATH) / exam.filepath
