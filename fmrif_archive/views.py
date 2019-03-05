@@ -19,6 +19,7 @@ from datetime import datetime
 from functools import reduce
 from django.db.models import Q
 from fmrif_base.permissions import HasActiveAccount
+from pathlib import Path
 
 import logging
 from django.conf import settings
@@ -102,38 +103,27 @@ class ExamView(APIView):
 
     def get(self, request, exam_id, revision=None):
 
-        logger = logging.getLogger('django.request')
+        # logger = logging.getLogger('django.request')
 
         exam = self.get_object(exam_id=exam_id, revision=revision)
 
-        # download = request.query_params.get('download', None)
-        #
-        # if exam and (download == 'full'):
-        #
-        #     response = HttpResponse()
-        #     response["Content-Disposition"] = "attachment; filename={}.tgz".format(exam.filename)
-        #     response['Content-Type'] = "application/gzip"
-        #
-        #     archive_fpath = os.path.join(
-        #         exam.station_name,
-        #         str(exam.study_date.year),
-        #         str(exam.study_date.month).rjust(2, '0'),
-        #         str(exam.study_date.day).rjust(2, '0'),
-        #         exam.filename,
-        #         'archives',
-        #         '{}.tgz'.format(exam.filename)
-        #     )
-        #
-        #     response['X-Accel-Redirect'] = os.path.join(
-        #         '/protected',
-        #         archive_fpath
-        #     )
-        #
-        #     response['Content-Length'] = os.path.getsize(os.path.join(settings.ARCHIVE_BASE_PATH, archive_fpath))
-        #
-        #     logger.debug('x-accel-redir: {}'.format(response['X-Accel-Redirect']))
-        #
-        #     return response
+        download = request.query_params.get('download', None)
+
+        if exam and (download == 'dicom'):
+
+            response = HttpResponse()
+            response["Content-Disposition"] = "attachment; filename={}".format(Path(exam.filepath).name)
+            response['Content-Type'] = "application/gzip"
+
+            archive_fpath = Path(settings.ARCHIVE_BASE_PATH) / exam.filepath
+
+            response['X-Sendfile'] = str(archive_fpath)
+
+            response['Content-Length'] = os.path.getsize(str(archive_fpath))
+
+            # logger.debug('x-accel-redir: {}'.format(response['X-Accel-Redirect']))
+
+            return response
 
         serializer = ExamSerializer(exam)
 
