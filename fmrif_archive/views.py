@@ -103,8 +103,6 @@ class ExamView(APIView):
 
     def get(self, request, exam_id, revision=None):
 
-        logger = logging.getLogger('django.request')
-
         exam = self.get_object(exam_id=exam_id, revision=revision)
 
         download = request.query_params.get('download', None)
@@ -120,11 +118,6 @@ class ExamView(APIView):
             response['X-Sendfile'] = str(archive_fpath)
 
             response['Content-Length'] = os.path.getsize(str(archive_fpath))
-
-            logger.debug('x-sendfile: {}'.format(response['X-Sendfile']))
-            logger.debug('Content-Disposition: {}'.format(response['Content-Disposition']))
-            logger.debug('Content-Type: {}'.format(response['Content-Type']))
-            logger.debug('Content-Length: {}'.format(response['Content-Length']))
 
             return response
 
