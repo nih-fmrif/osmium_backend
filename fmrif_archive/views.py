@@ -115,13 +115,18 @@ class ExamView(APIView):
             response["Content-Disposition"] = "attachment; filename={}".format(Path(exam.filepath).name)
             response['Content-Type'] = "application/gzip"
 
-            archive_fpath = Path(settings.ARCHIVE_BASE_PATH) / exam.filepath
+            # archive_fpath = Path(settings.ARCHIVE_BASE_PATH) / exam.filepath
+
+            archive_fpath = Path('/OsDicom/osmium_backend/logs') / exam.filepath
 
             response['X-Sendfile'] = str(archive_fpath)
 
             response['Content-Length'] = os.path.getsize(str(archive_fpath))
 
             logger.debug('x-sendfile: {}'.format(response['X-Sendfile']))
+            logger.debug('Content-Disposition: {}'.format(response['Content-Disposition']))
+            logger.debug('Content-Type: {}'.format(response['Content-Type']))
+            logger.debug('Content-Length: {}'.format(response['Content-Length']))
 
             return response
 
