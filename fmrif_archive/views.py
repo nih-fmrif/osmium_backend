@@ -59,17 +59,13 @@ class BasicSearchView(generics.ListAPIView):
 
         queryset = Exam.objects.all()
 
-        patient_last_name = self.request.query_params.get('patient_last_name', None)
-        if patient_last_name:
-            queryset = queryset.filter(patient_last_name__istartswith=patient_last_name)
+        last_name = self.request.query_params.get('last_name', None)
+        if last_name:
+            queryset = queryset.filter(last_name__istartswith=last_name)
 
-        patient_first_name = self.request.query_params.get('patient_first_name', None)
-        if patient_first_name:
-            queryset = queryset.filter(patient_first_name__istartswith=patient_first_name)
-
-        scanners = self.request.query_params.get('scanners', None)
-        if scanners:
-            pass
+        first_name = self.request.query_params.get('first_name', None)
+        if first_name:
+            queryset = queryset.filter(first_name__istartswith=first_name)
 
         study_date = self.request.query_params.get('study_date', None)
         if study_date:
