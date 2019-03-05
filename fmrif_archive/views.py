@@ -117,7 +117,7 @@ class ExamView(APIView):
 
             # archive_fpath = Path(settings.ARCHIVE_BASE_PATH) / exam.filepath
 
-            archive_fpath = Path('/OsDicom/osmium_backend/logs') / exam.filepath
+            archive_fpath = Path('/OsDicom/osmium_backend/logs') / Path(exam.filepath).name
 
             response['X-Sendfile'] = str(archive_fpath)
 
