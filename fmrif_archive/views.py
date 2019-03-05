@@ -115,9 +115,7 @@ class ExamView(APIView):
             response["Content-Disposition"] = 'attachment; filename="{}"'.format(Path(exam.filepath).name)
             response['Content-Type'] = "application/gzip"
 
-            # archive_fpath = Path(settings.ARCHIVE_BASE_PATH) / exam.filepath
-
-            archive_fpath = Path('/OsDicom/osmium_backend/logs') / Path(exam.filepath).name
+            archive_fpath = Path(settings.ARCHIVE_BASE_PATH) / exam.filepath
 
             response['X-Sendfile'] = str(archive_fpath)
 
