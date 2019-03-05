@@ -15,7 +15,7 @@ class FMRIFAuthentication(authentication.BaseAuthentication):
         try:
             employee_id = request.META[siteminder_headers.EMPLOYEE_ID]
         except KeyError:
-            raise exceptions.AuthenticationFailed("Unable to retrieve Siteminder credentials")
+            raise exceptions.AuthenticationFailed(detail="Unable to retrieve Siteminder credentials", code=401)
 
         try:
 
@@ -42,10 +42,10 @@ class FMRIFAuthentication(authentication.BaseAuthentication):
 
                 except Error:
 
-                    raise exceptions.AuthenticationFailed("Unable to create new user entry")
+                    raise exceptions.AuthenticationFailed(detail="Unable to create new user entry", code=401)
 
             else:
 
-                raise exceptions.AuthenticationFailed("Unable to retrieve credentials from AD")
+                raise exceptions.AuthenticationFailed(detail="Unable to retrieve credentials from AD", code=401)
 
         return user, None
