@@ -203,6 +203,7 @@ Temporary Items
 # Project specific
 .keys
 osmium_backend/settings/osmium.py
+osmium_backend/settings/osmium_dev.py
 osmium_backend/settings/bromine.py
 osmium_backend/settings/dev.py
 migrations*
