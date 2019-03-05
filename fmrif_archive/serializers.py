@@ -6,6 +6,7 @@ from fmrif_archive.models import (
     File,
     DICOMInstance,
 )
+from pathlib import Path
 
 
 class FileSerializer(serializers.ModelSerializer):
@@ -144,6 +145,11 @@ class ExamSerializer(serializers.ModelSerializer):
             "mr_scans",
             "other_data",
         )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['filename'] = Path(instance.filepath).name
+        return data
 
 
 class ExamPreviewSerializer(serializers.ModelSerializer):
