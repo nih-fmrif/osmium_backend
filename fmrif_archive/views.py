@@ -87,25 +87,23 @@ class ExamView(APIView):
 
     permission_classes = (HasActiveAccount,)
 
-    def get_object(self, exam_id, version=None):
+    def get_object(self, exam_id, revision=None):
 
-        if not version:
-            exam = Exam.objects.filter(exam_id=exam_id).latest('version')
+        if not revision:
+            exam = Exam.objects.filter(exam_id=exam_id).order_by('-revision').first()
         else:
-            exam = Exam.objects.filter(exam_id=exam_id, version=version)
+            exam = Exam.objects.filter(exam_id=exam_id, revision=revision).first()
 
         if not exam:
             raise Http404
 
-        return exam.first()
+        return exam
 
-    def get(self, request, exam_id):
+    def get(self, request, exam_id, revision=None):
 
         logger = logging.getLogger('django.request')
 
-        version = request.query_params.get('version', None)
-
-        exam = self.get_object(exam_id=exam_id, version=version)
+        exam = self.get_object(exam_id=exam_id, revision=revision)
 
         # download = request.query_params.get('download', None)
         #
@@ -141,47 +139,47 @@ class ExamView(APIView):
         return Response(serializer.data)
 
 
-class MRScanView(APIView):
+# class MRScanView(APIView):
+#
+#     permission_classes = (HasActiveAccount,)
+#
+#     def get_object(self, exam_id, scan_name, version=None):
+#
+#         if not version:
+#             exam = Exam.objects.filter(exam_id=exam_id).latest('version').prefetch_related('file_collections')
+#         else:
+#             exam = Exam.objects.filter(exam_id=exam_id, version=version).prefetch_related('file_collections')
+#
+#         if not exam:
+#             raise Http404
+#
+#         scan = exam.first().file_collections.filter(Q(MRScan__name=scan_name))
+#
+#         if not scan:
+#             raise Http404
+#
+#         return scan
+#
+#     def get(self, request, exam_id, scan_name):
+#         version = request.query_params.get('version', None)
+#         scan = self.get_object(exam_id=exam_id, scan_name=scan_name, version=version)
+#         serializer = MRScanSerializer(scan)
+#         return Response(serializer.data)
 
-    permission_classes = (HasActiveAccount,)
 
-    def get_object(self, exam_id, scan_name, version=None):
-
-        if not version:
-            exam = Exam.objects.filter(exam_id=exam_id).latest('version').prefetch_related('file_collections')
-        else:
-            exam = Exam.objects.filter(exam_id=exam_id, version=version).prefetch_related('file_collections')
-
-        if not exam:
-            raise Http404
-
-        scan = exam.first().file_collections.filter(Q(MRScan__name=scan_name))
-
-        if not scan:
-            raise Http404
-
-        return scan
-
-    def get(self, request, exam_id, scan_name):
-        version = request.query_params.get('version', None)
-        scan = self.get_object(exam_id=exam_id, scan_name=scan_name, version=version)
-        serializer = MRScanSerializer(scan)
-        return Response(serializer.data)
-
-
-class TestView(APIView):
-
-    permission_classes = (HasActiveAccount,)
-
-    def get(self, request):
-
-        user_data = {
-            'username': request.user.username,
-            'employee_id': request.user.employee_id,
-            'mail': request.user.mail,
-            'first_name': request.user.first_name,
-            'last_name': request.user.last_name,
-            'user_principal_name': request.user.user_principal_name
-        }
-
-        return Response(user_data)
+# class TestView(APIView):
+#
+#     permission_classes = (HasActiveAccount,)
+#
+#     def get(self, request):
+#
+#         user_data = {
+#             'username': request.user.username,
+#             'employee_id': request.user.employee_id,
+#             'mail': request.user.mail,
+#             'first_name': request.user.first_name,
+#             'last_name': request.user.last_name,
+#             'user_principal_name': request.user.user_principal_name
+#         }
+#
+#         return Response(user_data)
