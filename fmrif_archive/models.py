@@ -64,6 +64,7 @@ class Exam(models.Model):
             'revision',
             'exam_id',
         )
+        ordering = ['-revision']
 
 
 class BaseFileCollection(models.Model):
@@ -74,6 +75,7 @@ class BaseFileCollection(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ['name']
 
 
 class MRScan(BaseFileCollection):
@@ -108,6 +110,7 @@ class BaseFile(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ['filename']
 
 
 class DICOMInstance(BaseFile):
