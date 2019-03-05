@@ -162,7 +162,8 @@ class ExamPreviewSerializer(serializers.ModelSerializer):
             "study_time",
             "study_description",
             "protocol",
-            "name",
+            "first_name",
+            "last_name",
         )
 
         read_only_fields = (
@@ -175,5 +176,6 @@ class ExamPreviewSerializer(serializers.ModelSerializer):
             "study_time",
             "study_description",
             "protocol",
-            "name",
+            "first_name",
+            "last_name",
         )
