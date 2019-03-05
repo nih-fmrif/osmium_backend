@@ -93,7 +93,7 @@ class FileCollectionSerializer(serializers.ModelSerializer):
 class ExamSerializer(serializers.ModelSerializer):
 
     mr_scans = MRScanSerializer(many=True, read_only=True)
-    other_data = FileCollection(many=True, read_only=True)
+    other_data = FileCollectionSerializer(many=True, read_only=True)
 
     class Meta:
 
