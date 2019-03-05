@@ -117,7 +117,7 @@ class ExamView(APIView):
 
             return response
 
-        serializer = ExamSerializer(exam, context={'filename': Path(exam.filepath).name})
+        serializer = ExamSerializer(exam)
 
         return Response(serializer.data)
 
