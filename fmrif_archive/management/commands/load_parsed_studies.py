@@ -136,6 +136,9 @@ class Command(BaseCommand):
                                     except (KeyError, IndexError):
                                         station_name = None
 
+                                    if not station_name:
+                                        station_name = Path(filepath).split("/")[0]
+
                                     try:
                                         study_instance_uid = dicom_data["0020000D"]['Value'][0]
                                     except (KeyError, IndexError):
@@ -151,6 +154,11 @@ class Command(BaseCommand):
                                         study_date = datetime.strptime(study_date, '%Y%m%d').date()
                                     except (KeyError, IndexError):
                                         study_date = None
+
+                                    if not study_date:
+                                        year, month, day = Path(filepath).split("/")[1:4]
+                                        study_date = "{}{}{}".format(year, month, day)
+                                        study_date = datetime.strptime(study_date, '%Y%m%d').date()
 
                                     try:
                                         study_time = dicom_data["00080030"]['Value'][0]
