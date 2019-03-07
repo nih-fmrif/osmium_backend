@@ -89,7 +89,7 @@ class MRScan(BaseFileCollection):
     sop_class_uid = models.CharField(max_length=64, null=True)
     series_instance_uid = models.CharField(max_length=64, null=True)
     series_number = models.CharField(max_length=12, null=True)
-    scan_sequence = models.CharField(max_length=25, null=True)
+    scan_sequence = models.CharField(max_length=255, null=True, blank=True)
 
 
 class FileCollection(BaseFileCollection):
