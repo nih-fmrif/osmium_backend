@@ -137,7 +137,7 @@ class Command(BaseCommand):
                                         station_name = None
 
                                     if not station_name:
-                                        station_name = Path(filepath).split("/")[0]
+                                        station_name = filepath.split("/")[0]
 
                                     try:
                                         study_instance_uid = dicom_data["0020000D"]['Value'][0]
@@ -156,7 +156,7 @@ class Command(BaseCommand):
                                         study_date = None
 
                                     if not study_date:
-                                        year, month, day = Path(filepath).split("/")[1:4]
+                                        year, month, day = filepath.split("/")[1:4]
                                         study_date = "{}{}{}".format(year, month, day)
                                         study_date = datetime.strptime(study_date, '%Y%m%d').date()
 
