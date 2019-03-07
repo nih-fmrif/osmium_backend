@@ -61,6 +61,7 @@ class MRScanSerializer(serializers.ModelSerializer):
             'sop_class_uid',
             'series_instance_uid',
             'series_number',
+            'scan_sequence',
         )
 
         read_only_fields = (
@@ -73,6 +74,7 @@ class MRScanSerializer(serializers.ModelSerializer):
             'sop_class_uid',
             'series_instance_uid',
             'series_number',
+            'scan_sequence',
         )
 
 
