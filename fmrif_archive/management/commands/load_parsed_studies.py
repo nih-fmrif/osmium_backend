@@ -301,6 +301,14 @@ class Command(BaseCommand):
                                         except (KeyError, IndexError):
                                             series_number = None
 
+                                        try:
+                                            scan_sequence = scan_dicom_data["0019109C"]['Value'][0]
+                                        except (KeyError, IndexError):
+                                            try:
+                                                scan_sequence = scan_dicom_data["00180024"]['Value'][0]
+                                            except (KeyError, IndexError):
+                                                scan_sequence = None
+
                                         mr_scans_to_create.append(
                                             MRScan(
                                                 parent_exam=parent_exam,
@@ -311,7 +319,8 @@ class Command(BaseCommand):
                                                 series_description=series_description,
                                                 sop_class_uid=sop_class_uid,
                                                 series_instance_uid=series_instance_uid,
-                                                series_number=series_number
+                                                series_number=series_number,
+                                                scan_sequence=scan_sequence
                                             )
                                         )
 
