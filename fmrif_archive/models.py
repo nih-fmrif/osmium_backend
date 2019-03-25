@@ -83,12 +83,15 @@ class MRScan(BaseFileCollection):
 
     parent_exam = models.ForeignKey(Exam, related_name='mr_scans', on_delete=models.PROTECT)
 
+    # Fields like sop_class_uid and series_instance_uid accept more characters than the DICOM standard
+    # allows for because there are files with non-compliant number of characters (i.e. if they've been modified
+    # in the console, or some other situations).
     series_date = models.DateField(null=True)
     series_time = models.TimeField(null=True)
     series_description = models.CharField(max_length=255, null=True)
-    sop_class_uid = models.CharField(max_length=64, null=True)
-    series_instance_uid = models.CharField(max_length=64, null=True)
-    series_number = models.CharField(max_length=12, null=True)
+    sop_class_uid = models.CharField(max_length=255, null=True)
+    series_instance_uid = models.CharField(max_length=255, null=True)
+    series_number = models.CharField(max_length=50, null=True)
     scan_sequence = models.CharField(max_length=255, null=True, blank=True)
 
 
