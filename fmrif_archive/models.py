@@ -119,7 +119,7 @@ class BaseFile(models.Model):
 
 class DICOMInstance(BaseFile):
 
-    sop_instance_uid = models.CharField(max_length=64, null=True)
+    sop_instance_uid = models.CharField(max_length=255, null=True)
 
     # Minimal metadata for GE scans
     echo_number = models.PositiveSmallIntegerField(null=True)
