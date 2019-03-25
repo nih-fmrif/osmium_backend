@@ -133,6 +133,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
 
+        parser.add_argument("--data", type=str, default=settings.PARSED_DATA_PATH)
+
         parser.add_argument("--scanners", nargs="*", type=str, default=[])
 
         parser.add_argument("--years", nargs="*", type=str, default=[])
@@ -148,7 +150,7 @@ class Command(BaseCommand):
         months = options['months']
         days = options['days']
 
-        parsed_data_path = Path(settings.PARSED_DATA_PATH)
+        parsed_data_path = Path(options['data'])
 
         if not scanners:
             scanner_paths = [scanner_path for scanner_path in parsed_data_path.iterdir() if scanner_path.is_dir()]
