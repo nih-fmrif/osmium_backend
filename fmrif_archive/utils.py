@@ -1,3 +1,7 @@
+from collections import OrderedDict
+from fmrif_archive.dicom_mappings import DCM_TAG_TO_KWD
+
+
 def parse_pn(alphabetic_pn):
 
     if not alphabetic_pn:
@@ -60,3 +64,33 @@ def get_fmrif_scanner(curr_scanner):
             return fmrif_scanner
 
     return None
+
+
+def dicom_json_to_keyword_and_flatten(dicom_json):
+
+    new_summary = OrderedDict()
+
+    for key, val in dicom_json.items():
+
+        new_key = DCM_TAG_TO_KWD.get(key, None)
+
+        if val['vr'] == 'SQ' and val.get('Value', None):
+
+            old_values = val['Value']
+            new_values = []
+            for old_val in old_values:
+                new_values.append(dicom_json_to_keyword_and_flatten(old_val))
+
+            if new_key:
+                new_summary[new_key] = new_values
+            else:
+                new_summary[key] = new_values
+
+        else:
+
+            if new_key:
+                new_summary[new_key] = val.get('Value', None)
+            else:
+                new_summary[key] = val.get('Value', None)
+
+    return OrderedDict(sorted(new_summary.items()))
