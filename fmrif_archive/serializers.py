@@ -131,11 +131,10 @@ class MRScanSerializer(serializers.ModelSerializer):
 
         mr_scan = collection.find_one(query)
 
-        data['dicom_metadata'] = mr_scan if mr_scan else None
+        mr_scan.pop('_id')
+        mr_scan.pop('_metadata')
 
-        print(data)
-        print(type(mr_scan))
-        print(mr_scan)
+        data['dicom_metadata'] = mr_scan if mr_scan else None
 
         return data
 
