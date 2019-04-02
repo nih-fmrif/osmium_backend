@@ -126,7 +126,7 @@ class MRScanSerializer(serializers.ModelSerializer):
 
         query = {
             "_metadata.exam_id": data['exam_id'],
-            "_metadata.revision": data['revision'],
+            "_metadata.revision": data['exam_revision'],
             "_metadata.scan_name": data['name'],
         }
 
