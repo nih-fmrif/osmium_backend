@@ -1,12 +1,12 @@
 import os
 
 from django.http import HttpResponse
-from fmrif_archive.models import Exam, MRScan, DICOMInstance
+from fmrif_archive.models import Exam, MRScan, FileCollection
 from fmrif_archive.serializers import (
     ExamPreviewSerializer,
     ExamSerializer,
+    FileCollectionSerializer,
     MRScanSerializer,
-    DICOMInstanceSerializer,
 )
 from fmrif_archive.pagination import ExamSearchResultTablePagination
 from rest_framework import generics
@@ -95,6 +95,9 @@ class ExamView(APIView):
         if not exam:
             raise Http404
 
+        # Prefetch scans and file collections to avoid multiple DB hits
+        exam.prefetch_related('mr_scans', 'other_data')
+
         return exam
 
     def get(self, request, exam_id, revision=None):
@@ -122,7 +125,7 @@ class ExamView(APIView):
         return Response(serializer.data)
 
 
-class DICOMInstanceList(APIView):
+class MRScanView(APIView):
 
     permission_classes = (HasActiveAccount,)
 
@@ -146,9 +149,37 @@ class DICOMInstanceList(APIView):
 
     def get(self, request, exam_id, scan_name, revision=None):
         scan = self.get_object(exam_id=exam_id, scan_name=scan_name, revision=revision)
-        dicom_files = scan.dicom_files.all()
-        serializer = DICOMInstanceSerializer(dicom_files, many=True)
+        serializer = MRScanSerializer(scan)
         return Response(serializer.data)
+
+
+class FileCollectionView(APIView):
+
+    permission_classes = (HasActiveAccount,)
+
+    def get_object(self, exam_id, collection_name, revision=None):
+
+        if not revision:
+            exam = Exam.objects.filter(exam_id=exam_id).order_by('-revision').first()
+        else:
+            exam = Exam.objects.filter(exam_id=exam_id, revision=revision).first()
+
+        if not exam:
+            raise Http404
+
+        file_collection = FileCollection.objects.filter(parent_exam=exam,
+                                                        name=collection_name).prefetch_related('files').first()
+
+        if not file_collection:
+            raise Http404
+
+        return file_collection
+
+    def get(self, request, exam_id, collection_name, revision=None):
+        file_collection = self.get_object(exam_id=exam_id, collection_name=collection_name, revision=revision)
+        serializer = FileCollectionSerializer(file_collection)
+        return Response(serializer.data)
+
 
 
 # class TestView(APIView):

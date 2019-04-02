@@ -9,3 +9,4 @@ django-cors-headers==2.5.0
 django-request-logging==0.6.7
 python-rapidjson==0.7.0
 ldap3==2.5.2
+pymongo==3.7.2
