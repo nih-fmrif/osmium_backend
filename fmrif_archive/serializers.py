@@ -121,8 +121,7 @@ class MRScanSerializer(serializers.ModelSerializer):
 
         # Add dicom metadata from mongo db database
         mongo_client = settings.MONGO_CLIENT
-        mongo_archive = mongo_client['image_archive']
-        scans_collection = mongo_archive['mr_scans']
+        collection = mongo_client.image_archive.mr_scans
 
         query = {
             "_metadata.exam_id": data['exam_id'],
@@ -130,9 +129,13 @@ class MRScanSerializer(serializers.ModelSerializer):
             "_metadata.scan_name": data['name'],
         }
 
-        mongo_scan = scans_collection.find_one(query)
+        mr_scan = collection.find_one(query)
 
-        data['dicom_metadata'] = mongo_scan if mongo_scan else None
+        data['dicom_metadata'] = mr_scan if mr_scan else None
+
+        print(data)
+        print(type(mr_scan))
+        print(mr_scan)
 
         return data
 
