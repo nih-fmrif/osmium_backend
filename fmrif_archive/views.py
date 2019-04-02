@@ -88,15 +88,14 @@ class ExamView(APIView):
     def get_object(self, exam_id, revision=None):
 
         if not revision:
-            exam = Exam.objects.filter(exam_id=exam_id).order_by('-revision').first()
+            exam = Exam.objects.filter(exam_id=exam_id).order_by('-revision').prefetch_related(
+                'mr_scans', 'other_data').first()
         else:
-            exam = Exam.objects.filter(exam_id=exam_id, revision=revision).first()
+            exam = Exam.objects.filter(exam_id=exam_id, revision=revision).prefetch_related(
+                'mr_scans', 'other_data').first()
 
         if not exam:
             raise Http404
-
-        # Prefetch scans and file collections to avoid multiple DB hits
-        exam.prefetch_related('mr_scans', 'other_data')
 
         return exam
 
