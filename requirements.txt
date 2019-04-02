@@ -4,7 +4,7 @@
 #
 #    pip-compile requirements.in
 #
-certifi==2018.11.29       # via requests
+certifi==2019.3.9         # via requests
 chardet==3.0.4            # via requests
 click==7.0                # via pip-tools
 django-cors-headers==2.5.0
@@ -20,6 +20,7 @@ pip-tools==3.4.0
 pipreqs==0.4.9
 psycopg2-binary==2.7.7
 pyasn1==0.4.5             # via ldap3
+pymongo==3.7.2
 python-rapidjson==0.7.0
 pytz==2018.9              # via django
 requests==2.21.0          # via yarg

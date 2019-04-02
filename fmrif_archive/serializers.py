@@ -7,9 +7,10 @@ from fmrif_archive.models import (
     DICOMInstance,
 )
 from pathlib import Path
+from django.conf import settings
 
 
-class FileSerializer(serializers.ModelSerializer):
+class FileInstanceSerializer(serializers.ModelSerializer):
 
     class Meta:
 
@@ -47,6 +48,10 @@ class DICOMInstanceSerializer(serializers.ModelSerializer):
 
 class MRScanSerializer(serializers.ModelSerializer):
 
+    exam_id = serializers.CharField(source="parent_exam.exam_id", read_only=True)
+    revision = serializers.IntegerField(source="parent_exam.revision", read_only=True)
+    dicom_files = DICOMInstanceSerializer(many=True, read_only=True)
+
     class Meta:
 
         model = MRScan
@@ -62,6 +67,7 @@ class MRScanSerializer(serializers.ModelSerializer):
             'series_instance_uid',
             'series_number',
             'scan_sequence',
+            'dicom_files',
         )
 
         read_only_fields = (
@@ -75,10 +81,34 @@ class MRScanSerializer(serializers.ModelSerializer):
             'series_instance_uid',
             'series_number',
             'scan_sequence',
+            'dicom_files',
         )
+
+    def to_representation(self, instance):
+
+        data = super().to_representation(instance)
+
+        # Add dicom metadata from mongo db database
+        mongo_client = settings.MONGO_CLIENT
+        mongo_archive = mongo_client['image_archive']
+        scans_collection = mongo_archive['mr_scans']
+
+        query = {
+            "_metadata.exam_id": data['exam_id'],
+            "_metadata.revision": data['revision'],
+            "_metadata.scan_name": data['name'],
+        }
+
+        mongo_scan = scans_collection.find_one(query)
+
+        data['dicom_metadata'] = mongo_scan if mongo_scan else None
+
+        return data
 
 
 class FileCollectionSerializer(serializers.ModelSerializer):
+
+    files = FileInstanceSerializer(many=True, read_only=True)
 
     class Meta:
 
@@ -88,12 +118,14 @@ class FileCollectionSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'num_files',
+            'files'
         )
 
         read_only_fields = (
             'id',
             'name',
             'num_files',
+            'files'
         )
 
 
