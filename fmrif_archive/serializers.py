@@ -46,10 +46,33 @@ class DICOMInstanceSerializer(serializers.ModelSerializer):
         )
 
 
+class MRScanPreviewSerializer(serializers.ModelSerializer):
+
+    class Meta:
+
+        model = MRScan
+
+        fields = (
+            'id',
+            'name',
+            'num_files',
+            'series_description',
+        )
+
+        read_only_fields = (
+            'id',
+            'name',
+            'num_files',
+            'series_description',
+        )
+
+
 class MRScanSerializer(serializers.ModelSerializer):
 
     exam_id = serializers.CharField(source="parent_exam.exam_id", read_only=True)
-    revision = serializers.IntegerField(source="parent_exam.revision", read_only=True)
+    exam_revision = serializers.IntegerField(source="parent_exam.revision", read_only=True)
+    exam_patient_name = serializers.CharField(source="parent_exam.name", read_only=True)
+    exam_study_id = serializers.CharField(source="parent_exam.study_id", read_only=True)
     dicom_files = DICOMInstanceSerializer(many=True, read_only=True)
 
     class Meta:
@@ -58,6 +81,10 @@ class MRScanSerializer(serializers.ModelSerializer):
 
         fields = (
             'id',
+            'exam_id',
+            'exam_revision',
+            'exam_patient_name',
+            'exam_study_id',
             'name',
             'num_files',
             'series_date',
@@ -72,6 +99,10 @@ class MRScanSerializer(serializers.ModelSerializer):
 
         read_only_fields = (
             'id',
+            'exam_id',
+            'exam_revision',
+            'exam_patient_name',
+            'exam_study_id',
             'name',
             'num_files',
             'series_date',
@@ -106,9 +137,7 @@ class MRScanSerializer(serializers.ModelSerializer):
         return data
 
 
-class FileCollectionSerializer(serializers.ModelSerializer):
-
-    files = FileInstanceSerializer(many=True, read_only=True)
+class FileCollectionPreviewSerializer(serializers.ModelSerializer):
 
     class Meta:
 
@@ -118,11 +147,42 @@ class FileCollectionSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'num_files',
+        )
+
+        read_only_fields = (
+            'id',
+            'name',
+            'num_files',
+        )
+
+
+class FileCollectionSerializer(serializers.ModelSerializer):
+
+    exam_id = serializers.CharField(source="parent_exam.exam_id", read_only=True)
+    exam_revision = serializers.IntegerField(source="parent_exam.revision", read_only=True)
+    exam_patient_name = serializers.CharField(source="parent_exam.name", read_only=True)
+    exam_study_id = serializers.CharField(source="parent_exam.study_id", read_only=True)
+    files = FileInstanceSerializer(many=True, read_only=True)
+
+    class Meta:
+
+        model = FileCollection
+
+        fields = (
+            'id',
+            'exam_id',
+            'exam_revision',
+            'exam_patient_name',
+            'exam_study_id',
+            'name',
+            'num_files',
             'files'
         )
 
         read_only_fields = (
             'id',
+            'exam_id',
+            'exam_revision',
             'name',
             'num_files',
             'files'
@@ -131,8 +191,8 @@ class FileCollectionSerializer(serializers.ModelSerializer):
 
 class ExamSerializer(serializers.ModelSerializer):
 
-    mr_scans = MRScanSerializer(many=True, read_only=True)
-    other_data = FileCollectionSerializer(many=True, read_only=True)
+    mr_scans = MRScanPreviewSerializer(many=True, read_only=True)
+    other_data = FileCollectionPreviewSerializer(many=True, read_only=True)
 
     class Meta:
 
