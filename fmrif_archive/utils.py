@@ -68,6 +68,11 @@ def get_fmrif_scanner(curr_scanner):
 
 def dicom_json_to_keyword_and_flatten(dicom_json):
 
+    try:
+        dicom_json.items()
+    except AttributeError:
+        return dicom_json
+
     new_summary = OrderedDict()
 
     for key, val in dicom_json.items():
