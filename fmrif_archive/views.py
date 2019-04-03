@@ -219,6 +219,7 @@ class AdvancedSearchView(APIView):
 
         if new_query or not count:
             count = collection.aggregate(count_query)
+            count = count[0]['count']
 
         cursor = collection.aggregate(aggregation_query)
 
