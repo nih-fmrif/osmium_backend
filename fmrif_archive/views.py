@@ -110,6 +110,9 @@ class AdvancedSearchView(APIView):
             #     }
             # },
             {
+                '$limit': 500,
+            },
+            {
                 "$group":
                 {
                     "_id": {"exam_id": "$_metadata.exam_id"},
