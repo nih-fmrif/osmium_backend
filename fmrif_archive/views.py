@@ -220,11 +220,11 @@ class AdvancedSearchView(APIView):
                 'page_size': page_size,
                 'last_page': 0,
                 'count': 0,
-                'has_next_page': False,
-                'has_prev_page': False,
+                'has_next_page': True,
+                'has_prev_page': False if page_num == 1 else True,
             },
             'results': results,
-            'current_query': query
+            'current_query': json.dumps(query)
         })
 
 
