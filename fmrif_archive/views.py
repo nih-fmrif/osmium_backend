@@ -102,12 +102,11 @@ class AdvancedSearchView(APIView):
             {
                 "$match": query,
             },
-            {
-                "$sort": {
-                    "StudyDate.0": -1,
-                    "StudyTime.0": -1
-                }
-            },
+            # {
+            #     "$sort": {
+            #         "$_metadata.study_date": -1
+            #     }
+            # },
             {
                 "$group":
                 {
