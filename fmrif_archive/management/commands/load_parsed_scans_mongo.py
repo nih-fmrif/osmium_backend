@@ -26,9 +26,9 @@ class Command(BaseCommand):
 
         parser.add_argument("--days", nargs="*", type=str, default=[])
 
-        parser.add_argument("--database", type="str", default="image_archive")
+        parser.add_argument("--database", type=str, default="image_archive")
 
-        parser.add_argument("--collection", type="str", default="mr_scans")
+        parser.add_argument("--collection", type=str, default="mr_scans")
 
     def handle(self, *args, **options):
 
