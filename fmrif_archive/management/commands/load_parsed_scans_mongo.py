@@ -8,6 +8,7 @@ from fmrif_archive.utils import dicom_json_to_keyword_and_flatten
 from pymongo import DESCENDING
 from pymongo.errors import PyMongoError
 from datetime import datetime
+from fmrif_archive.utils import get_fmrif_scanner, parse_pn
 
 
 class Command(BaseCommand):
@@ -173,14 +174,66 @@ class Command(BaseCommand):
                                         datetime_str = "{}T{}".format(study_date, study_time)
                                         study_datetime = datetime.strptime(datetime_str, fmt)
 
+                                        try:
+                                            study_instance_uid = scan_dicom_data["0020000D"]['Value'][0]
+                                        except (KeyError, IndexError):
+                                            study_instance_uid = None
+
+                                        try:
+                                            study_id = scan_dicom_data["00200010"]['Value'][0]
+                                        except (KeyError, IndexError):
+                                            study_id = None
+
+                                        try:
+                                            scanner = get_fmrif_scanner(scan_dicom_data["00081010"]["Value"][0])
+                                        except (KeyError, IndexError):
+                                            scanner = study_metadata['metadata']['gold_fpath'].split("/")[0]
+
+                                        try:
+                                            name = scan_dicom_data["00100010"]['Value'][0]['Alphabetic']
+                                        except (KeyError, IndexError):
+                                            name = None
+
+                                        if name:
+                                            name_fields = parse_pn(name)
+                                            last_name = name_fields['family_name']
+                                            first_name = name_fields['given_name']
+                                        else:
+                                            first_name, last_name = None, None
+
+                                        try:
+                                            patient_id = scan_dicom_data["00100020"]['Value'][0]
+                                        except (KeyError, IndexError):
+                                            patient_id = None
+
+                                        try:
+                                            sex = scan_dicom_data["00100040"]['Value'][0]
+                                        except (KeyError, IndexError):
+                                            sex = None
+
+                                        try:
+                                            birth_date = scan_dicom_data["00100030"]['Value'][0]
+                                            birth_date = datetime.strptime(birth_date, '%Y%m%d')
+                                        except (KeyError, IndexError):
+                                            birth_date = None
+
                                         scan_document = {
                                             "_metadata": {
                                                 "scan_name": scan_name,
                                                 "num_files": num_files,
                                                 "exam_id": parent_exam_id,
                                                 "revision": revision,
+                                                "scanner": scanner,
+                                                "patient_first_name": first_name,
+                                                "patient_last_name": last_name,
+                                                "patient_id": patient_id,
+                                                "patient_sex": sex,
+                                                "patient_birth_date": birth_date,
+                                                "study_id": study_id,
+                                                "study_instance_uid": study_instance_uid,
                                                 "study_datetime": study_datetime,
                                                 "last_modified": datetime.now(),
+                                                "protocol": None,
                                             }
                                         }
 
