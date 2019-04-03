@@ -175,14 +175,14 @@ class Command(BaseCommand):
                                         study_datetime = datetime.strptime(datetime_str, fmt)
 
                                         try:
-                                            study_instance_uid = scan_dicom_data["0020000D"]['Value'][0]
-                                        except (KeyError, IndexError):
-                                            study_instance_uid = None
-
-                                        try:
                                             study_id = scan_dicom_data["00200010"]['Value'][0]
                                         except (KeyError, IndexError):
                                             study_id = None
+
+                                        try:
+                                            study_description = scan_dicom_data["00081030"]['Value'][0]
+                                        except (KeyError, IndexError):
+                                            study_description = None
 
                                         try:
                                             scanner = get_fmrif_scanner(scan_dicom_data["00081010"]["Value"][0])
@@ -230,7 +230,7 @@ class Command(BaseCommand):
                                                 "patient_sex": sex,
                                                 "patient_birth_date": birth_date,
                                                 "study_id": study_id,
-                                                "study_instance_uid": study_instance_uid,
+                                                "study_description": study_description,
                                                 "study_datetime": study_datetime,
                                                 "last_modified": datetime.now(),
                                                 "protocol": None,
