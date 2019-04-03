@@ -89,7 +89,7 @@ class AdvancedSearchView(APIView):
 
     permission_classes = (HasActiveAccount,)
 
-    def mongo_query(self, query, page_num=1, page_size=10):
+    def mongo_query(self, query, page_num=1, page_size=10, count=None, new_query=True):
 
         mongo_client = settings.MONGO_CLIENT
         collection = mongo_client.image_archive.mr_scans
@@ -100,7 +100,64 @@ class AdvancedSearchView(APIView):
         if page_num < 1:
             page_num = 1
 
-        aggregation_params = [
+        count_query = [
+            {
+                "$match": query,
+            },
+            # {
+            #     "$sort": {
+            #         "$_metadata.study_date": -1
+            #     }
+            # },
+            {
+                '$limit': 500,
+            },
+            {
+                "$group":
+                {
+                    "_id": {"exam_id": "$_metadata.exam_id"},
+                    "revision": {"$push": "$_metadata.revision"},
+                    "scan_name": {"$push": "$_metadata.scan_name"},
+                    "scanner": {"$first": "$_metadata.scanner"},
+                    "patient_first_name": {"$first": "$_metadata.patient_first_name"},
+                    "patient_last_name": {"$first": "$_metadata.patient_last_name"},
+                    "patient_id": {"$first": "$_metadata.patient_id"},
+                    "patient_sex": {"$first": "$_metadata.patient_sex"},
+                    "patient_birth_date": {"$first": "$_metadata.patient_birth_date"},
+                    "study_id": {"$first": "$_metadata.study_id"},
+                    "study_description": {"$first": "$_metadata.study_description"},
+                    "study_datetime": {"$first": "$_metadata.study_datetime"},
+                    "protocol": {"$first": "$_metadata.protocol"},
+                }
+            },
+            {
+                "$project":
+                {
+                    "revision_scan_pairs": {
+                        "$zip": {
+                            "inputs": ["$revision", "$scan_name"]
+                        }
+                    },
+                    "_id": 0,
+                    "exam_id": "$_id.exam_id",
+                    "scanner": 1,
+                    "patient_first_name": 1,
+                    "patient_last_name": 1,
+                    "patient_id": 1,
+                    "patient_sex": 1,
+                    "patient_birth_date": 1,
+                    "study_id": 1,
+                    "study_description": 1,
+                    "study_datetime": 1,
+                    "protocol": 1,
+                }
+            },
+            {
+                "$count": "count"
+            }
+        ]
+
+        aggregation_query = [
             {
                 "$match": query,
             },
@@ -160,7 +217,10 @@ class AdvancedSearchView(APIView):
             }
         ]
 
-        cursor = collection.aggregate(aggregation_params)
+        if new_query or not count:
+            count = collection.aggregate(count_query)
+
+        cursor = collection.aggregate(aggregation_query)
 
         results = [res for res in cursor]
 
@@ -198,7 +258,18 @@ class AdvancedSearchView(APIView):
             res.pop('revision_scan_pairs')
             res['scans'] = OrderedDict(sorted(scans.items()))
 
-        return results
+        return {
+            'pagination': {
+                'page': page_num,
+                'page_size': page_size,
+                'last_page': 0,
+                'count': count,
+                'has_next_page': True,
+                'has_prev_page': False if page_num == 1 else True,
+            },
+            'results': results,
+            'current_query': json.dumps(query)
+        }
 
     def get(self, request):
 
@@ -212,20 +283,15 @@ class AdvancedSearchView(APIView):
         page_num = request.query_params.get('page_num', 1)
         page_size = request.query_params.get('page_size', 10)
 
-        results = self.mongo_query(query=query, page_num=page_num, page_size=page_size)
+        count = query.get('_count', None)
+        query.pop('_count')
+        new_query = query.get('_new_query', True)
+        query.pop('_new_query')
 
-        return Response({
-            'pagination': {
-                'page': page_num,
-                'page_size': page_size,
-                'last_page': 0,
-                'count': 0,
-                'has_next_page': True,
-                'has_prev_page': False if page_num == 1 else True,
-            },
-            'results': results,
-            'current_query': json.dumps(query)
-        })
+        results = self.mongo_query(query=query, page_num=page_num, page_size=page_size, count=count,
+                                   new_query=new_query)
+
+        return Response(results)
 
 
 class ExamView(APIView):
