@@ -13,6 +13,7 @@ from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
+from rest_framework.exceptions import ParseError
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
 from datetime import datetime
@@ -22,6 +23,7 @@ from fmrif_base.permissions import HasActiveAccount
 from pathlib import Path
 from fmrif_archive.utils import get_fmrif_scanner
 from collections import OrderedDict
+import rapidjson as json
 
 import logging
 from django.conf import settings
@@ -189,7 +191,13 @@ class AdvancedSearchView(APIView):
 
     def get(self, request):
 
-        query = request.query_params.get('query', {})
+        query = request.query_params.get('query', '{}')
+
+        try:
+            query = json.loads(query)
+        except:
+            raise ParseError("Invalid query")
+
         page_num = request.query_params.get('page_num', 1)
         page_size = request.query_params.get('page_size', 10)
 
