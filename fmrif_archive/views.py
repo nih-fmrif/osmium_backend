@@ -203,7 +203,18 @@ class AdvancedSearchView(APIView):
 
         results = self.mongo_query(query=query, page_num=page_num, page_size=page_size)
 
-        return Response(results)
+        return Response({
+            'pagination': {
+                'page': page_num,
+                'page_size': page_size,
+                'last_page': 0,
+                'count': 0,
+                'has_next_page': False,
+                'has_prev_page': False,
+            },
+            'results': results,
+            'current_query': query
+        })
 
 
 class ExamView(APIView):
