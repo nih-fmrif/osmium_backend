@@ -218,11 +218,12 @@ class AdvancedSearchView(APIView):
         ]
 
         if new_query or not count:
+
             count = list(collection.aggregate(count_query))
 
-            if count:
+            try:
                 count = count[0].get('count', 0)
-            else:
+            except (IndexError, AttributeError):
                 count = 0
 
         cursor = collection.aggregate(aggregation_query)
