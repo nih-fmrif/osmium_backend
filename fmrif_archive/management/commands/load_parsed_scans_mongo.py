@@ -245,7 +245,7 @@ class Command(BaseCommand):
 
                                     try:
 
-                                        collection.insert_many(scan_documents_to_create, j=True)
+                                        collection.insert_many(scan_documents_to_create)
 
                                     except PyMongoError as e:
 
