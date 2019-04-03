@@ -20,6 +20,8 @@ from functools import reduce
 from django.db.models import Q
 from fmrif_base.permissions import HasActiveAccount
 from pathlib import Path
+from fmrif_archive.utils import get_fmrif_scanner
+from collections import OrderedDict
 
 import logging
 from django.conf import settings
@@ -79,6 +81,122 @@ class BasicSearchView(generics.ListAPIView):
             queryset = queryset.filter(query)
 
         return queryset
+
+
+class AdvancedSearchView(APIView):
+
+    permission_classes = (HasActiveAccount,)
+
+    def mongo_query(self, query, page_num=1, page_size=10):
+
+        mongo_client = settings.MONGO_CLIENT
+        collection = mongo_client.image_archive.mr_scans
+
+        if page_size > 100:
+            page_size = 100
+
+        if page_num < 1:
+            page_num = 1
+
+        aggregation_params = [
+            {
+                "$match": query,
+            },
+            {
+                "$sort": {
+                    "StudyDate.0": -1,
+                    "StudyTime.0": -1
+                }
+            },
+            {
+                "$group":
+                {
+                    "_id": {"exam_id": "$_metadata.exam_id"},
+                    "revision": {"$push": "$_metadata.revision"},
+                    "scan_name": {"$push": "$_metadata.scan_name"},
+                    "PatientName": {"$first": "$PatientName"},
+                    "StudyDate": {"$first": "$StudyDate"},
+                    "StudyTime": {"$first": "$StudyTime"},
+                    "StationName": {"$first": "$StationName"},
+                    "StudyID": {"$first": "$StudyID"},
+                    "StudyDescription": {"$first": "$StudyDescription"},
+                    "Protocol": {"$first": "$_metadata.protocol"},
+                }
+            },
+            {
+                "$project":
+                {
+                    "revision_scan_pairs": {
+                        "$zip": {
+                            "inputs": ["$revision", "$scan_name"]
+                        }
+                    },
+                    "PatientName": 1,
+                    "StudyDate": 1,
+                    "StudyTime": 1,
+                    "StationName": 1,
+                    "StudyID": 1,
+                    "StudyDescription": 1,
+                    "Protocol": 1,
+                }
+            },
+            {
+                "$skip": page_size*(page_num - 1),
+            },
+            {
+                "$limit": page_size,
+            }
+        ]
+
+        cursor = collection.aggregate(aggregation_params)
+
+        results = [res for res in cursor]
+
+        for res in results:
+
+            try:
+                pt_name = res['PatientName'][0]['Alphabetic']
+                res['PatientName'] = [pt_name]
+            except (KeyError, IndexError):
+                pass
+
+            try:
+                scanner = res['StationName'][0]
+                res['StationName'] = [get_fmrif_scanner(scanner)]
+            except(KeyError, IndexError):
+                pass
+
+            scans = {}
+            try:
+
+                revision_scan_pairs = res['revision_scan_pairs']
+
+                for pair in revision_scan_pairs:
+
+                    revision, curr_scan = pair
+
+                    if revision not in scans.keys():
+                        scans[revision] = [curr_scan]
+                    else:
+                        scans[revision].append(curr_scan)
+
+            except (KeyError, IndexError):
+                pass
+
+            res.pop('revision_scan_pairs')
+            res['scans'] = OrderedDict(sorted(scans.items()))
+
+        return results
+
+    def get(self, request):
+
+        query = request.query_params.get('query', {})
+        page_num = request.query_params.get('page_num', 1)
+        page_size = request.query_params.get('page_size', 10)
+
+        results = self.mongo_query(query=query, page_num=page_num, page_size=page_size)
+
+        return Response(results)
 
 
 class ExamView(APIView):
