@@ -5,8 +5,9 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from pathlib import Path
 from fmrif_archive.utils import dicom_json_to_keyword_and_flatten
-from pymongo import MongoClient, DESCENDING
+from pymongo import DESCENDING
 from pymongo.errors import PyMongoError
+from datetime import datetime
 
 
 class Command(BaseCommand):
@@ -25,18 +26,16 @@ class Command(BaseCommand):
 
         parser.add_argument("--days", nargs="*", type=str, default=[])
 
+        parser.add_argument("--database", type="str", default="image_archive")
+
+        parser.add_argument("--collection", type="str", default="mr_scans")
+
     def handle(self, *args, **options):
 
         # Establish MongoDB connection
-        client = MongoClient(
-            settings.MONGO_DB['mr_scans']['HOST'],
-            username=settings.MONGO_DB['mr_scans']['USER'],
-            password=settings.MONGO_DB['mr_scans']['PASSWORD'],
-            authSource=settings.MONGO_DB['mr_scans']['AUTH_SOURCE'],
-            authMechanism=settings.MONGO_DB['mr_scans']['AUTH_MECHANISM']
-        )
-        db = client[settings.MONGO_DB['mr_scans']['DATABASE']]
-        collection = db[settings.MONGO_DB['mr_scans']['COLLECTION']]
+        client = settings.MONGO_CLIENT
+        db = client[options['database']]
+        collection = db[options['collection']]
 
         # Test whether the uniqueness constraint is defined, create it if not (this will only happen when collection
         # first created)
@@ -47,6 +46,11 @@ class Command(BaseCommand):
                 ('_metadata.revision', DESCENDING),
                 ('_metadata.scan_name', DESCENDING)
             ], unique=True, name="scan_uniqueness_constraint")
+
+        if not collection.index_information().get('study_date_idx', None):
+            collection.create_index([
+                ('_metadata.study_date', DESCENDING)
+            ], name="study_date_idx")
 
         scanners = options['scanners']
         years = options['years']
@@ -140,11 +144,34 @@ class Command(BaseCommand):
                                             num_files = scan_metadata['num_files']
                                             parent_exam_id = scan_metadata['parent_exam_id']
                                             revision = 1
+
                                         except KeyError:
 
                                             self.stdout.write("Error: Missing mandatory scan metadata, "
                                                               "omitting scan from exam {}".format(study_meta_file))
                                             continue
+
+                                        try:
+                                            study_date = scan_dicom_data["00080020"]['Value'][0]
+                                        except (KeyError, IndexError):
+                                            study_date = None
+
+                                        if not study_date:
+                                            year, month, day = study_metadata['metadata']['gold_fpath'].split("/")[1:4]
+                                            study_date = "{}{}{}".format(year, month, day)
+
+                                        try:
+                                            study_time = scan_dicom_data["00080030"]['Value'][0]
+                                        except (KeyError, IndexError):
+                                            study_time = "000000"
+
+                                        if "." in study_time:
+                                            fmt = "%Y%m%dT%H%M%S.%f"
+                                        else:
+                                            fmt = "%Y%m%dT%H%M%S"
+
+                                        datetime_str = "{}T{}".format(study_date, study_time)
+                                        study_datetime = datetime.strptime(datetime_str, fmt)
 
                                         scan_document = {
                                             "_metadata": {
@@ -152,6 +179,8 @@ class Command(BaseCommand):
                                                 "num_files": num_files,
                                                 "exam_id": parent_exam_id,
                                                 "revision": revision,
+                                                "study_datetime": study_datetime,
+                                                "last_modified": datetime.now(),
                                             }
                                         }
 
