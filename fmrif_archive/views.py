@@ -125,7 +125,7 @@ class AdvancedSearchView(APIView):
                     "patient_sex": {"$first": "$_metadata.patient_sex"},
                     "patient_birth_date": {"$first": "$_metadata.patient_birth_date"},
                     "study_id": {"$first": "$_metadata.study_id"},
-                    "study_instance_uid": {"$first": "$_metadata.study_instance_uid"},
+                    "study_description": {"$first": "$_metadata.study_description"},
                     "study_datetime": {"$first": "$_metadata.study_datetime"},
                     "protocol": {"$first": "$_metadata.protocol"},
                 }
@@ -147,7 +147,7 @@ class AdvancedSearchView(APIView):
                     "patient_sex": 1,
                     "patient_birth_date": 1,
                     "study_id": 1,
-                    "study_instance_uid": 1,
+                    "study_description": 1,
                     "study_datetime": 1,
                     "protocol": 1,
                 }
