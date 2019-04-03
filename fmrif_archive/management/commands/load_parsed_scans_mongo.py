@@ -132,6 +132,8 @@ class Command(BaseCommand):
                                         if subdir.get('dicom_data', None):
                                             mr_scans.append(subdir)
 
+                                    self.stdout.write("Found {} mr scans".format(len(mr_scans)))
+
                                     scan_documents_to_create = []
 
                                     for scan in mr_scans:
@@ -244,6 +246,9 @@ class Command(BaseCommand):
                                         scan_documents_to_create.append(scan_document)
 
                                     try:
+
+                                        self.stdout.write("Adding {} scan "
+                                                          "documents".format(len(scan_documents_to_create)))
 
                                         collection.insert_many(scan_documents_to_create)
 
