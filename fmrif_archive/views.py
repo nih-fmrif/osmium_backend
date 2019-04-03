@@ -284,9 +284,9 @@ class AdvancedSearchView(APIView):
         page_size = request.query_params.get('page_size', 10)
 
         count = query.get('_count', None)
-        query.pop('_count')
+        query.pop('_count', None)
         new_query = query.get('_new_query', True)
-        query.pop('_new_query')
+        query.pop('_new_query', None)
 
         results = self.mongo_query(query=query, page_num=page_num, page_size=page_size, count=count,
                                    new_query=new_query)
