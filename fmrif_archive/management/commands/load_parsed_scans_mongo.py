@@ -250,7 +250,10 @@ class Command(BaseCommand):
                                         self.stdout.write("Adding {} scan "
                                                           "documents".format(len(scan_documents_to_create)))
 
-                                        collection.insert_many(scan_documents_to_create)
+                                        cursor = collection.insert_many(scan_documents_to_create)
+
+                                        if cursor:
+                                            cursor.close()
 
                                     except PyMongoError as e:
 
