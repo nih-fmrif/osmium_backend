@@ -82,6 +82,9 @@ class Command(BaseCommand):
                 year_paths = [year_path for year_path in scanner_path.iterdir()
                               if (year_path.is_dir() and year_path.name in years)]
 
+            print("year_paths: ")
+            print(year_paths)
+
             for year_path in sorted(year_paths):
 
                 if not months:
@@ -90,6 +93,9 @@ class Command(BaseCommand):
                     month_paths = [month_path for month_path in year_path.iterdir()
                                    if (month_path.is_dir() and month_path.name in months)]
 
+                print("month_paths: ")
+                print(month_paths)
+
                 for month_path in sorted(month_paths):
 
                     if not days:
@@ -97,6 +103,9 @@ class Command(BaseCommand):
                     else:
                         day_paths = [day_path for day_path in month_path.iterdir()
                                      if (day_path.is_dir() and day_path.name in days)]
+
+                    print("day paths:")
+                    print(day_paths)
 
                     for day_path in sorted(day_paths):
 
