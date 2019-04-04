@@ -110,7 +110,7 @@ class AdvancedSearchView(APIView):
             {
                 "$group":
                 {
-                    "_id": "$_id",
+                    "_id": {"exam_id": "$_metadata.exam_id", "revision": "$_metadata.revision"},
                     "scan_name": {"$push": "$_metadata.scan_name"},
                     "exam_id": {"$first": "$_metadata.exam_id"},
                     "revision": {"$first": "$_metadata.revision"},
@@ -152,7 +152,7 @@ class AdvancedSearchView(APIView):
             {
                 "$group":
                 {
-                    "_id": "$_id",
+                    "_id": {"exam_id": "$_metadata.exam_id", "revision": "$_metadata.revision"},
                     "scan_name": {"$push": "$_metadata.scan_name"},
                     "exam_id": {"$first": "$_metadata.exam_id"},
                     "revision": {"$first": "$_metadata.revision"},
