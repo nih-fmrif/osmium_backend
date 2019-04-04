@@ -41,7 +41,7 @@ class Command(BaseCommand):
             new_vr = DICOMValueRepresentation(
                 symbol=symbol,
                 type=attrs['type'],
-                json_type=attrs['vr']
+                json_type=attrs['json_type']
             )
             new_vr.save()
 
