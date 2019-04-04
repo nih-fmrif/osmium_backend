@@ -72,7 +72,7 @@ class Command(BaseCommand):
                              if (scanner_path.is_dir() and scanner_path.name in scanners)]
 
         self.stdout.write("scanner_paths: ")
-        self.stdout.write(scanner_paths)
+        self.stdout.write("{}".format(scanner_paths))
 
         for scanner_path in sorted(scanner_paths):
 
@@ -83,7 +83,7 @@ class Command(BaseCommand):
                               if (year_path.is_dir() and year_path.name in years)]
 
             self.stdout.write("year_paths: ")
-            self.stdout.write(year_paths)
+            self.stdout.write("{}".format(year_paths))
 
             for year_path in sorted(year_paths):
 
@@ -94,7 +94,7 @@ class Command(BaseCommand):
                                    if (month_path.is_dir() and month_path.name in months)]
 
                 self.stdout.write("month_paths: ")
-                self.stdout.write(month_paths)
+                self.stdout.write("{}".format(month_paths))
 
                 for month_path in sorted(month_paths):
 
@@ -105,7 +105,7 @@ class Command(BaseCommand):
                                      if (day_path.is_dir() and day_path.name in days)]
 
                     self.stdout.write("day paths:")
-                    self.stdout.write(day_paths)
+                    self.stdout.write("{}".format(day_paths))
 
                     for day_path in sorted(day_paths):
 
