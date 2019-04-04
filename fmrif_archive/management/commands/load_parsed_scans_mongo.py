@@ -60,33 +60,19 @@ class Command(BaseCommand):
 
         parsed_data_path = Path(options['data'])
 
-        self.stdout.write("data path: {}".format(parsed_data_path))
-        self.stdout.write("years: {}".format(years))
-        self.stdout.write("months: {}".format(months))
-        self.stdout.write("days: {}".format(days))
-
         if not scanners:
             scanner_paths = [scanner_path for scanner_path in parsed_data_path.iterdir() if scanner_path.is_dir()]
         else:
             scanner_paths = [scanner_path for scanner_path in parsed_data_path.iterdir()
-                             if (scanner_path.is_dir() and scanner_path.name in scanners)]
-
-        self.stdout.write("scanner_paths: ")
-        self.stdout.write("{}".format(scanner_paths))
+                             if (scanner_path.is_dir() and (scanner_path.name in scanners))]
 
         for scanner_path in sorted(scanner_paths):
-
-            test = [year_path.name for year_path in scanner_path.iterdir()]
-            self.stdout.write("{}".format(test))
 
             if not years:
                 year_paths = [year_path for year_path in scanner_path.iterdir() if year_path.is_dir()]
             else:
                 year_paths = [year_path for year_path in scanner_path.iterdir()
-                              if (year_path.is_dir() and year_path.name in years)]
-
-            self.stdout.write("year_paths: ")
-            self.stdout.write("{}".format(year_paths))
+                              if (year_path.is_dir() and (year_path.name in years))]
 
             for year_path in sorted(year_paths):
 
@@ -94,10 +80,7 @@ class Command(BaseCommand):
                     month_paths = [month_path for month_path in year_path.iterdir() if month_path.is_dir()]
                 else:
                     month_paths = [month_path for month_path in year_path.iterdir()
-                                   if (month_path.is_dir() and month_path.name in months)]
-
-                self.stdout.write("month_paths: ")
-                self.stdout.write("{}".format(month_paths))
+                                   if (month_path.is_dir() and (month_path.name in months))]
 
                 for month_path in sorted(month_paths):
 
@@ -105,10 +88,7 @@ class Command(BaseCommand):
                         day_paths = [day_path for day_path in month_path.iterdir() if day_path.is_dir()]
                     else:
                         day_paths = [day_path for day_path in month_path.iterdir()
-                                     if (day_path.is_dir() and day_path.name in days)]
-
-                    self.stdout.write("day paths:")
-                    self.stdout.write("{}".format(day_paths))
+                                     if (day_path.is_dir() and (day_path.name in days))]
 
                     for day_path in sorted(day_paths):
 
