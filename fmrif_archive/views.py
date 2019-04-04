@@ -106,7 +106,7 @@ class AdvancedSearchView(APIView):
             },
             {
                 "$sort": {
-                    "$_metadata.study_datetime": -1
+                    "_metadata.study_datetime": -1
                 }
             },
             # {
@@ -148,7 +148,7 @@ class AdvancedSearchView(APIView):
             },
             {
                 "$sort": {
-                    "$_metadata.study_datetime": -1
+                    "_metadata.study_datetime": -1
                 }
             },
             # {
@@ -178,9 +178,6 @@ class AdvancedSearchView(APIView):
                 {
                     "_id": 0,
                 }
-            },
-            {
-                "$count": "count"
             }
         ]
 
