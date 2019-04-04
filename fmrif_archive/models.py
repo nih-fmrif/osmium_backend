@@ -145,7 +145,7 @@ class DICOMValueRepresentation(models.Model):
     )
     vr = models.CharField(max_length=2, primary_key=True)
     name = models.CharField(max_length=255)
-    json_type = models.CharField(max_lenght=6, choices=JSON_TYPES)
+    json_type = models.CharField(max_length=6, choices=JSON_TYPES)
 
 
 class DICOMTag(models.Model):
