@@ -1,0 +1,130 @@
+{
+    "AE": {
+        "json_type": "string",
+        "type": "Application Entity"
+    },
+    "AS": {
+        "json_type": "string",
+        "type": "Age String"
+    },
+    "AT": {
+        "json_type": "string",
+        "type": "Attribute Tag"
+    },
+    "CS": {
+        "json_type": "string",
+        "type": "Code String"
+    },
+    "DA": {
+        "json_type": "string",
+        "type": "Date"
+    },
+    "DS": {
+        "json_type": "number",
+        "type": "Decimal String"
+    },
+    "DT": {
+        "json_type": "string",
+        "type": "Date Time"
+    },
+    "FD": {
+        "json_type": "number",
+        "type": "Floating Point Double"
+    },
+    "FL": {
+        "json_type": "number",
+        "type": "Floating Point Single"
+    },
+    "IS": {
+        "json_type": "number",
+        "type": "Integer String"
+    },
+    "LO": {
+        "json_type": "string",
+        "type": "Long String"
+    },
+    "LT": {
+        "json_type": "string",
+        "type": "Long Text"
+    },
+    "OB": {
+        "json_type": "b64",
+        "type": "Other Byte"
+    },
+    "OD": {
+        "json_type": "b64",
+        "type": "Other Double"
+    },
+    "OF": {
+        "json_type": "b64",
+        "type": "Other Float"
+    },
+    "OL": {
+        "json_type": "b64",
+        "type": "Other Long"
+    },
+    "OV": {
+        "json_type": "b64",
+        "type": "Other Value"
+    },
+    "OW": {
+        "json_type": "b64",
+        "type": "Other Word"
+    },
+    "PN": {
+        "json_type": "string",
+        "type": "Person Name"
+    },
+    "SH": {
+        "json_type": "string",
+        "type": "Short String"
+    },
+    "SL": {
+        "json_type": "number",
+        "type": "Signed Long"
+    },
+    "SQ": {
+        "json_type": "json",
+        "type": "Sequence of Items"
+    },
+    "SS": {
+        "json_type": "number",
+        "type": "Signed Short"
+    },
+    "ST": {
+        "json_type": "string",
+        "type": "Short Text"
+    },
+    "TM": {
+        "json_type": "string",
+        "type": "Time"
+    },
+    "UC": {
+        "json_type": "string",
+        "type": "Unlimited Characters"
+    },
+    "UI": {
+        "json_type": "string",
+        "type": "Unique Identifier (UID)"
+    },
+    "UL": {
+        "json_type": "number",
+        "type": "Unsigned Long"
+    },
+    "UN": {
+        "json_type": "b64",
+        "type": "Unknown"
+    },
+    "UR": {
+        "json_type": "string",
+        "type": "Universal Resource Identifier or Universal Resource Locator (URI/URL)"
+    },
+    "US": {
+        "json_type": "number",
+        "type": "Unsigned Short"
+    },
+    "UT": {
+        "json_type": "string",
+        "type": "Unlimited Text"
+    }
+}

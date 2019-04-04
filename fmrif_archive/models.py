@@ -143,8 +143,8 @@ class DICOMValueRepresentation(models.Model):
         ('json', 'json'),  # json encoded saved as string
         ('b64', 'b64'),  # base64 encoded string
     )
-    vr = models.CharField(max_length=2, primary_key=True)
-    name = models.CharField(max_length=255)
+    symbol = models.CharField(max_length=2, primary_key=True)
+    type = models.CharField(max_length=255)
     json_type = models.CharField(max_length=6, choices=JSON_TYPES)
 
 
