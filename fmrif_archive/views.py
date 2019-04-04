@@ -104,20 +104,21 @@ class AdvancedSearchView(APIView):
             {
                 "$match": query,
             },
-            # {
-            #     "$sort": {
-            #         "$_metadata.study_date": -1
-            #     }
-            # },
             {
-                '$limit': 500,
+                "$sort": {
+                    "$_metadata.study_datetime": -1
+                }
             },
+            # {
+            #     '$limit': 500,
+            # },
             {
                 "$group":
                 {
-                    "_id": {"exam_id": "$_metadata.exam_id"},
-                    "revision": {"$push": "$_metadata.revision"},
+                    "_id": "$_id",
                     "scan_name": {"$push": "$_metadata.scan_name"},
+                    "exam_id": {"$first": "$_metadata.exam_id"},
+                    "revision": {"$first": "$_metadata.revision"},
                     "scanner": {"$first": "$_metadata.scanner"},
                     "patient_first_name": {"$first": "$_metadata.patient_first_name"},
                     "patient_last_name": {"$first": "$_metadata.patient_last_name"},
@@ -133,23 +134,7 @@ class AdvancedSearchView(APIView):
             {
                 "$project":
                 {
-                    "revision_scan_pairs": {
-                        "$zip": {
-                            "inputs": ["$revision", "$scan_name"]
-                        }
-                    },
                     "_id": 0,
-                    "exam_id": "$_id.exam_id",
-                    "scanner": 1,
-                    "patient_first_name": 1,
-                    "patient_last_name": 1,
-                    "patient_id": 1,
-                    "patient_sex": 1,
-                    "patient_birth_date": 1,
-                    "study_id": 1,
-                    "study_description": 1,
-                    "study_datetime": 1,
-                    "protocol": 1,
                 }
             },
             {
@@ -161,20 +146,21 @@ class AdvancedSearchView(APIView):
             {
                 "$match": query,
             },
-            # {
-            #     "$sort": {
-            #         "$_metadata.study_date": -1
-            #     }
-            # },
             {
-                '$limit': 500,
+                "$sort": {
+                    "$_metadata.study_datetime": -1
+                }
             },
+            # {
+            #     '$limit': 500,
+            # },
             {
                 "$group":
                 {
-                    "_id": {"exam_id": "$_metadata.exam_id"},
-                    "revision": {"$push": "$_metadata.revision"},
+                    "_id": "$_id",
                     "scan_name": {"$push": "$_metadata.scan_name"},
+                    "exam_id": {"$first": "$_metadata.exam_id"},
+                    "revision": {"$first": "$_metadata.revision"},
                     "scanner": {"$first": "$_metadata.scanner"},
                     "patient_first_name": {"$first": "$_metadata.patient_first_name"},
                     "patient_last_name": {"$first": "$_metadata.patient_last_name"},
@@ -190,30 +176,11 @@ class AdvancedSearchView(APIView):
             {
                 "$project":
                 {
-                    "revision_scan_pairs": {
-                        "$zip": {
-                            "inputs": ["$revision", "$scan_name"]
-                        }
-                    },
                     "_id": 0,
-                    "exam_id": "$_id.exam_id",
-                    "scanner": 1,
-                    "patient_first_name": 1,
-                    "patient_last_name": 1,
-                    "patient_id": 1,
-                    "patient_sex": 1,
-                    "patient_birth_date": 1,
-                    "study_id": 1,
-                    "study_description": 1,
-                    "study_datetime": 1,
-                    "protocol": 1,
                 }
             },
             {
-                "$skip": page_size*(page_num - 1),
-            },
-            {
-                "$limit": page_size,
+                "$count": "count"
             }
         ]
 
@@ -230,39 +197,41 @@ class AdvancedSearchView(APIView):
 
         results = [res for res in cursor]
 
-        for res in results:
+        cursor.close()
 
-            try:
-                pt_name = res['PatientName'][0]['Alphabetic']
-                res['PatientName'] = [pt_name]
-            except (KeyError, IndexError):
-                pass
-
-            try:
-                scanner = res['StationName'][0]
-                res['StationName'] = [get_fmrif_scanner(scanner)]
-            except(KeyError, IndexError):
-                pass
-
-            scans = {}
-            try:
-
-                revision_scan_pairs = res['revision_scan_pairs']
-
-                for pair in revision_scan_pairs:
-
-                    revision, curr_scan = pair
-
-                    if revision not in scans.keys():
-                        scans[revision] = [curr_scan]
-                    else:
-                        scans[revision].append(curr_scan)
-
-            except (KeyError, IndexError):
-                pass
-
-            res.pop('revision_scan_pairs')
-            res['scans'] = OrderedDict(sorted(scans.items()))
+        # for res in results:
+        #
+        #     try:
+        #         pt_name = res['PatientName'][0]['Alphabetic']
+        #         res['PatientName'] = [pt_name]
+        #     except (KeyError, IndexError):
+        #         pass
+        #
+        #     try:
+        #         scanner = res['StationName'][0]
+        #         res['StationName'] = [get_fmrif_scanner(scanner)]
+        #     except(KeyError, IndexError):
+        #         pass
+        #
+        #     scans = {}
+        #     try:
+        #
+        #         revision_scan_pairs = res['revision_scan_pairs']
+        #
+        #         for pair in revision_scan_pairs:
+        #
+        #             revision, curr_scan = pair
+        #
+        #             if revision not in scans.keys():
+        #                 scans[revision] = [curr_scan]
+        #             else:
+        #                 scans[revision].append(curr_scan)
+        #
+        #     except (KeyError, IndexError):
+        #         pass
+        #
+        #     res.pop('revision_scan_pairs')
+        #     res['scans'] = OrderedDict(sorted(scans.items()))
 
         return {
             'pagination': {
