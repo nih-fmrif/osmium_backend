@@ -252,8 +252,6 @@ class Command(BaseCommand):
 
                                         res = collection.bulk_write(scan_documents_to_create)
 
-                                        client.close()
-
                                         self.stdout.write("Inserted {} scans to collection".format(res.inserted_count))
 
                                     except PyMongoError as e:
