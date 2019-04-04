@@ -31,13 +31,12 @@ class Command(BaseCommand):
 
         parser.add_argument("--collection", type=str, default="mr_scans")
 
-    @profile
     def handle(self, *args, **options):
 
         # Establish MongoDB connection
         client = settings.MONGO_CLIENT
         db = client[options['database']]
-        collection = db.get_collection(options['collection'], write_concern=WriteConcern(w=1, j=True))
+        collection = db.get_collection(options['collection'])
 
         # Test whether the uniqueness constraint is defined, create it if not (this will only happen when collection
         # first created)
