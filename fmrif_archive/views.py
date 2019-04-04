@@ -183,14 +183,14 @@ class AdvancedSearchView(APIView):
 
         if new_query or not count:
 
-            count = list(collection.aggregate(count_query))
+            count = list(collection.aggregate(count_query, allowDiskUse=True))
 
             try:
                 count = count[0].get('count', 0)
             except (IndexError, AttributeError):
                 count = 0
 
-        cursor = collection.aggregate(aggregation_query)
+        cursor = collection.aggregate(aggregation_query, allowDiskUse=True)
 
         results = [res for res in cursor]
 
