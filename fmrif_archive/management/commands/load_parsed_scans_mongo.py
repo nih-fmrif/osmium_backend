@@ -50,8 +50,8 @@ class Command(BaseCommand):
 
         if not collection.index_information().get('study_date_idx', None):
             collection.create_index([
-                ('_metadata.study_date', DESCENDING)
-            ], name="study_date_idx")
+                ('_metadata.study_datetime', DESCENDING)
+            ], name="study_datetime_idx")
 
         scanners = options['scanners']
         years = options['years']
