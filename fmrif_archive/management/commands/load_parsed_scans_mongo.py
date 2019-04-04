@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from pathlib import Path
 from fmrif_archive.utils import dicom_json_to_keyword_and_flatten
-from pymongo import DESCENDING, InsertOne
+from pymongo import DESCENDING, InsertOne, WriteConcern
 from pymongo.errors import PyMongoError
 from datetime import datetime
 from fmrif_archive.utils import get_fmrif_scanner, parse_pn
@@ -36,7 +36,7 @@ class Command(BaseCommand):
         # Establish MongoDB connection
         client = settings.MONGO_CLIENT
         db = client[options['database']]
-        collection = db[options['collection']]
+        collection = db.get_collection(options['collection'], write_concern=WriteConcern(w=1, j=True))
 
         # Test whether the uniqueness constraint is defined, create it if not (this will only happen when collection
         # first created)
