@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from pathlib import Path
 from fmrif_archive.utils import dicom_json_to_keyword_and_flatten
-from pymongo import DESCENDING
+from pymongo import DESCENDING, InsertOne
 from pymongo.errors import PyMongoError
 from datetime import datetime
 from fmrif_archive.utils import get_fmrif_scanner, parse_pn
@@ -243,14 +243,16 @@ class Command(BaseCommand):
 
                                         scan_document.update(dicom_readable)
 
-                                        scan_documents_to_create.append(scan_document)
+                                        scan_documents_to_create.append(InsertOne(scan_document))
 
                                     try:
 
                                         self.stdout.write("Adding {} scan "
                                                           "documents".format(len(scan_documents_to_create)))
 
-                                        collection.insert_many(scan_documents_to_create)
+                                        res = collection.bulk_write(scan_documents_to_create)
+
+                                        self.stdout.write("Inserted {} scans to collection".format(res.inserted_count))
 
                                     except PyMongoError as e:
 
