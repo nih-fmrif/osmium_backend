@@ -76,6 +76,8 @@ class Command(BaseCommand):
 
         for scanner_path in sorted(scanner_paths):
 
+            test = [year_path.name for year_path in scanner_path.iterdir()]
+
             if not years:
                 year_paths = [year_path for year_path in scanner_path.iterdir() if year_path.is_dir()]
             else:
