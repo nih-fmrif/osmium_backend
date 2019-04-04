@@ -244,3 +244,5 @@ class DICOMFieldInstance(models.Model):
                         or self.string_multi or self.number_multi or self.json_multi or self.b64_multi):
 
                     raise ValidationError("Only the field b64_single is allowed to be populated.")
+
+        super().save(*args, **kwargs)
