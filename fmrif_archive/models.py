@@ -1,7 +1,8 @@
 from django.db import models
-from django.contrib.postgres.fields import JSONField
 from fmrif_base.models import Protocol
 from django.utils import timezone
+from django.contrib.postgres.fields import ArrayField, JSONField
+from django.core.exceptions import ValidationError
 
 
 class Exam(models.Model):
@@ -132,3 +133,114 @@ class DICOMInstance(BaseFile):
 class File(BaseFile):
 
     parent_collection = models.ForeignKey('FileCollection', related_name='files', on_delete=models.PROTECT)
+
+
+class DICOMValueRepresentation(models.Model):
+
+    JSON_TYPES = (
+        ('string', 'string'),
+        ('number', 'number'),
+        ('json', 'json'),  # json encoded saved as string
+        ('b64', 'b64'),  # base64 encoded string
+    )
+    vr = models.CharField(max_length=2, primary_key=True)
+    name = models.CharField(max_length=255)
+    json_type = models.CharField(max_lenght=6, choices=JSON_TYPES)
+
+
+class DICOMTag(models.Model):
+
+    tag = models.CharField(max_length=4)
+    name = models.CharField(max_length=255, null=True, blank=True)
+    keyword = models.CharField(max_length=255, null=True, blank=True)
+    vr = models.ForeignKey(DICOMValueRepresentation, on_delete=models.PROTECT, related_name='dicom_tags', null=True)
+    is_multival = models.NullBooleanField(null=True, default=False)  # Private fields saved as multival fields
+    is_retired = models.NullBooleanField(null=True, default=False)
+    can_query = models.NullBooleanField(default=True)
+
+    class Meta:
+
+        unique_together = (
+            'tag',
+            'vr',
+        )
+
+
+class DICOMFieldInstance(models.Model):
+
+    dicom_tag = models.ForeignKey(DICOMTag, on_delete=models.PROTECT, related_name='field_instances')
+    parent_scan = models.ForeignKey(MRScan, on_delete=models.PROTECT, related_name='dicom_fields')
+
+    string_single = models.CharField(max_length=400, blank=True, null=True)
+    number_single = models.FloatField(null=True)
+    b64_single = models.TextField(blank=True, null=True)
+    json_single = JSONField(blank=True, null=True)
+    string_multi = ArrayField(models.CharField(max_length=400, blank=True, null=True), null=True)
+    number_multi = ArrayField(models.FloatField(null=True), null=True)
+    b64_multi = ArrayField(models.TextField(blank=True, null=True), null=True)
+    json_multi = ArrayField(JSONField(blank=True, null=True), null=True)
+
+    def save(self, *args, **kwargs):
+
+        is_multival = self.dicom_tag.is_multival
+        json_type = self.dicom_tag.vr.json_type
+
+        if is_multival:
+
+            if json_type == "string":
+
+                if (self.string_single or self.number_single or self.b64_single or self.json_single
+                        or self.number_multi or self.b64_multi or self.json_multi):
+
+                    raise ValidationError("Only the field string_multi is allowed to be populated.")
+
+            elif json_type == "number":
+
+                if (self.string_single or self.number_single or self.b64_single or self.json_single
+                        or self.string_multi or self.b64_multi or self.json_multi):
+
+                    raise ValidationError("Only the field number_multi is allowed to be populated.")
+
+            elif json_type == "json":
+
+                if (self.string_single or self.number_single or self.b64_single or self.json_single
+                        or self.string_multi or self.number_multi or self.b64_multi):
+
+                    raise ValidationError("Only the field json_multi is allowed to be populated.")
+
+            elif json_type == "b64":
+
+                if (self.string_single or self.number_single or self.b64_single or self.json_single
+                        or self.string_multi or self.number_multi or self.json_multi):
+
+                    raise ValidationError("Only the field b64_multi is allowed to be populated.")
+
+        else:
+
+            if json_type == "string":
+
+                if (self.number_single or self.b64_single or self.json_single
+                        or self.string_multi or self.number_multi or self.b64_multi or self.json_multi):
+
+                    raise ValidationError("Only the field string_single is allowed to be populated.")
+
+            elif json_type == "number":
+
+                if (self.string_single or self.b64_single or self.json_single
+                        or self.string_multi or self.number_multi or self.b64_multi or self.json_multi):
+
+                    raise ValidationError("Only the field number_single is allowed to be populated.")
+
+            elif json_type == "json":
+
+                if (self.string_single or self.number_single or self.b64_single
+                        or self.string_multi or self.number_multi or self.json_multi or self.b64_multi):
+
+                    raise ValidationError("Only the field json_single is allowed to be populated.")
+
+            elif json_type == "b64":
+
+                if (self.string_single or self.number_single or self.json_single
+                        or self.string_multi or self.number_multi or self.json_multi or self.b64_multi):
+
+                    raise ValidationError("Only the field b64_single is allowed to be populated.")
