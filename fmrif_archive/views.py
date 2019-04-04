@@ -108,6 +108,11 @@ class AdvancedSearchView(APIView):
             #     '$limit': 500,
             # },
             {
+                "$sort": {
+                    "$_metadata.study_datetime": -1
+                }
+            },
+            {
                 "$group":
                 {
                     "_id": {"exam_id": "$_metadata.exam_id", "revision": "$_metadata.revision"},
@@ -150,6 +155,11 @@ class AdvancedSearchView(APIView):
             #     '$limit': 500,
             # },
             {
+                "$sort": {
+                    "$_metadata.study_datetime": -1
+                }
+            },
+            {
                 "$group":
                 {
                     "_id": {"exam_id": "$_metadata.exam_id", "revision": "$_metadata.revision"},
@@ -169,15 +179,16 @@ class AdvancedSearchView(APIView):
                 }
             },
             {
-                "$sort": {
-                    "study_datetime": -1
-                }
-            },
-            {
                 "$project":
                 {
                     "_id": 0,
                 }
+            },
+            {
+                "$skip": page_size * (page_num - 1)
+            },
+            {
+                "$limit": page_num
             }
         ]
 
