@@ -31,6 +31,7 @@ class Command(BaseCommand):
 
         parser.add_argument("--collection", type=str, default="mr_scans")
 
+    @profile
     def handle(self, *args, **options):
 
         # Establish MongoDB connection
