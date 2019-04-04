@@ -150,7 +150,7 @@ class DICOMValueRepresentation(models.Model):
 
 class DICOMTag(models.Model):
 
-    tag = models.CharField(max_length=4)
+    tag = models.CharField(max_length=8)
     name = models.CharField(max_length=255, null=True, blank=True)
     keyword = models.CharField(max_length=255, null=True, blank=True)
     vr = models.ForeignKey(DICOMValueRepresentation, on_delete=models.PROTECT, related_name='dicom_tags', null=True)
