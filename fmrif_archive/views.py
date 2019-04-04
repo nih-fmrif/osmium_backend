@@ -188,7 +188,7 @@ class AdvancedSearchView(APIView):
                 "$skip": page_size * (page_num - 1)
             },
             {
-                "$limit": page_num
+                "$limit": page_size
             }
         ]
 
