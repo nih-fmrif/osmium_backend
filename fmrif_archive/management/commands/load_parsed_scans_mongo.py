@@ -60,11 +60,19 @@ class Command(BaseCommand):
 
         parsed_data_path = Path(options['data'])
 
+        self.stdout.write("data path: {}".format(parsed_data_path))
+        self.stdout.write("years: {}".format(years))
+        self.stdout.write("months: {}".format(months))
+        self.stdout.write("days: {}".format(days))
+
         if not scanners:
             scanner_paths = [scanner_path for scanner_path in parsed_data_path.iterdir() if scanner_path.is_dir()]
         else:
             scanner_paths = [scanner_path for scanner_path in parsed_data_path.iterdir()
                              if (scanner_path.is_dir() and scanner_path.name in scanners)]
+
+        print("scanner_paths: ")
+        print(scanner_paths)
 
         for scanner_path in sorted(scanner_paths):
 
