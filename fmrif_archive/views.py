@@ -104,11 +104,6 @@ class AdvancedSearchView(APIView):
             {
                 "$match": query,
             },
-            {
-                "$sort": {
-                    "_metadata.study_datetime": -1
-                }
-            },
             # {
             #     '$limit': 500,
             # },
@@ -138,6 +133,11 @@ class AdvancedSearchView(APIView):
                 }
             },
             {
+                "$sort": {
+                    "study_datetime": -1
+                }
+            },
+            {
                 "$count": "count"
             }
         ]
@@ -145,11 +145,6 @@ class AdvancedSearchView(APIView):
         aggregation_query = [
             {
                 "$match": query,
-            },
-            {
-                "$sort": {
-                    "_metadata.study_datetime": -1
-                }
             },
             # {
             #     '$limit': 500,
@@ -171,6 +166,11 @@ class AdvancedSearchView(APIView):
                     "study_description": {"$first": "$_metadata.study_description"},
                     "study_datetime": {"$first": "$_metadata.study_datetime"},
                     "protocol": {"$first": "$_metadata.protocol"},
+                }
+            },
+            {
+                "$sort": {
+                    "study_datetime": -1
                 }
             },
             {
