@@ -297,7 +297,7 @@ class Command(BaseCommand):
                                                     self.stdout.write(w)
                                                     self.stdout.write(traceback.format_exc())
 
-                                            else:
-                                                self.stdout.write("Warning: No dicom data found for scan {}"
-                                                                  "of exam {}".format(scan_name, study_meta_file))
-                                                continue
+                                        else:
+                                            self.stdout.write("Warning: No dicom data found for scan {}"
+                                                              "of exam {}".format(scan_name, study_meta_file))
+                                            continue
