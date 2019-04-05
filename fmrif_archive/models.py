@@ -171,10 +171,10 @@ class DICOMFieldInstance(models.Model):
     dicom_tag = models.ForeignKey(DICOMTag, on_delete=models.PROTECT, related_name='field_instances')
     parent_scan = models.ForeignKey(MRScan, on_delete=models.PROTECT, related_name='dicom_fields')
 
-    string_single = models.CharField(max_length=400, blank=True, null=True)
+    string_single = models.TextField(blank=True, null=True)
     number_single = models.FloatField(null=True)
     b64_single = models.TextField(blank=True, null=True)
-    string_multi = ArrayField(models.CharField(max_length=400, blank=True, null=True), null=True)
+    string_multi = ArrayField(models.TextField(blank=True, null=True), null=True)
     number_multi = ArrayField(models.FloatField(null=True), null=True)
     b64_multi = ArrayField(models.TextField(blank=True, null=True), null=True)
     json_data = JSONField(blank=True, null=True)
