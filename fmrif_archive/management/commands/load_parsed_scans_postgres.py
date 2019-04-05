@@ -136,7 +136,7 @@ class Command(BaseCommand):
 
                                         parent_scan = MRScan.objects.get(
                                             parent_exam=parent_exam,
-                                            scan_name=scan_name
+                                            name=scan_name
                                         )
 
                                         if scan_dicom_data and (type(scan_dicom_data) == dict):
