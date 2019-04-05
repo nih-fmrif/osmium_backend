@@ -214,14 +214,8 @@ class Command(BaseCommand):
                                                         current_tag.is_multival
                                                         and current_vr.json_type == 'b64'
                                                 ) else False
-                                                json_single = True if (
-                                                        (not current_tag.is_multival)
-                                                        and current_vr.json_type == 'json'
-                                                ) else False
-                                                json_multi = True if (
-                                                        current_tag.is_multival
-                                                        and current_vr.json_type == 'json'
-                                                ) else False
+
+                                                json_data = True if current_vr.json_type == 'json' else False
 
                                                 orig_val = attrs.get('Value', None)
 
@@ -274,11 +268,10 @@ class Command(BaseCommand):
                                                         string_single=value if string_single else None,
                                                         number_single=value if number_single else None,
                                                         b64_single=value if b64_single else None,
-                                                        json_single=value if json_single else None,
                                                         string_multi=value if string_multi else None,
                                                         number_multi=value if number_multi else None,
                                                         b64_multi=value if b64_multi else None,
-                                                        json_multi=value if json_multi else None,
+                                                        json_data=value if json_data else None,
                                                     )
 
                                                     new_field_instance.save()
