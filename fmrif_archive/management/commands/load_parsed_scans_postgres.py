@@ -144,6 +144,8 @@ class Command(BaseCommand):
 
                                         if scan_dicom_data and (type(scan_dicom_data) == dict):
 
+                                            fields_to_create = []
+
                                             for tag, attrs in scan_dicom_data.items():
 
                                                 if not attrs.get('vr', None):
@@ -263,9 +265,9 @@ class Command(BaseCommand):
                                                         value = []
                                                     else:
                                                         value = None
-                                                try:
 
-                                                    new_field_instance = DICOMFieldInstance(
+                                                fields_to_create.append(
+                                                    DICOMFieldInstance(
                                                         dicom_tag=current_tag,
                                                         parent_scan=parent_scan,
                                                         string_single=value if string_single else None,
@@ -276,29 +278,29 @@ class Command(BaseCommand):
                                                         b64_multi=value if b64_multi else None,
                                                         json_data=value if json_data else None,
                                                     )
+                                                )
 
-                                                    new_field_instance.save()
+                                            try:
 
-                                                except (DjangoDBError, PgError) as e:
+                                                DICOMFieldInstance.objects.bulk_create(fields_to_create)
 
-                                                    self.stdout.write("Error: Unable to create MRScan models "
-                                                                      "for exam {}".format(study_meta_file))
-                                                    self.stdout.write("Scan: {}".format(scan_name))
-                                                    self.stdout.write("Tag: {}".format(tag))
-                                                    self.stdout.write("Original Value: {}".format(orig_val))
-                                                    self.stdout.write("Processed Value: {}".format(value))
-                                                    self.stdout.write(e)
-                                                    self.stdout.write(traceback.format_exc())
+                                            except (DjangoDBError, PgError) as e:
 
-                                                    raise Exception
+                                                self.stdout.write("Error: Unable to create MRScan models "
+                                                                  "for exam {}".format(study_meta_file))
+                                                self.stdout.write("Scan: {}".format(scan_name))
+                                                self.stdout.write(e)
+                                                self.stdout.write(traceback.format_exc())
 
-                                                except PgWarning as w:
+                                                raise Exception
 
-                                                    self.stdout.write("Warning: Postgres warning processing "
-                                                                      "MRScan models for "
-                                                                      "exam {}".format(study_meta_file))
-                                                    self.stdout.write(w)
-                                                    self.stdout.write(traceback.format_exc())
+                                            except PgWarning as w:
+
+                                                self.stdout.write("Warning: Postgres warning processing "
+                                                                  "MRScan models for "
+                                                                  "exam {}".format(study_meta_file))
+                                                self.stdout.write(w)
+                                                self.stdout.write(traceback.format_exc())
 
                                         else:
                                             self.stdout.write("Warning: No dicom data found for scan {}"
