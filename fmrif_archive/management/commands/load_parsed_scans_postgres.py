@@ -117,6 +117,8 @@ class Command(BaseCommand):
                                         if subdir.get('dicom_data', None):
                                             mr_scans.append(subdir)
 
+                                    fields_to_create = []
+
                                     for scan in mr_scans:
 
                                         try:
@@ -143,8 +145,6 @@ class Command(BaseCommand):
                                         )
 
                                         if scan_dicom_data and (type(scan_dicom_data) == dict):
-
-                                            fields_to_create = []
 
                                             for tag, attrs in scan_dicom_data.items():
 
@@ -280,32 +280,32 @@ class Command(BaseCommand):
                                                     )
                                                 )
 
-                                            try:
-
-                                                DICOMFieldInstance.objects.bulk_create(fields_to_create)
-
-                                            except (DjangoDBError, PgError) as e:
-
-                                                self.stdout.write("Error: Unable to create MRScan models "
-                                                                  "for exam {}".format(study_meta_file))
-                                                self.stdout.write("Scan: {}".format(scan_name))
-                                                self.stdout.write(e)
-                                                self.stdout.write(traceback.format_exc())
-
-                                                raise Exception
-
-                                            except PgWarning as w:
-
-                                                self.stdout.write("Warning: Postgres warning processing "
-                                                                  "MRScan models for "
-                                                                  "exam {}".format(study_meta_file))
-                                                self.stdout.write(w)
-                                                self.stdout.write(traceback.format_exc())
-
                                         else:
                                             self.stdout.write("Warning: No dicom data found for scan {}"
                                                               "of exam {}".format(scan_name, study_meta_file))
-                                            continue
+
+                                    if fields_to_create:
+
+                                        try:
+
+                                            DICOMFieldInstance.objects.bulk_create(fields_to_create)
+
+                                        except (DjangoDBError, PgError) as e:
+
+                                            self.stdout.write("Error: Unable to create MRScan models "
+                                                              "for exam {}".format(study_meta_file))
+                                            self.stdout.write(e)
+                                            self.stdout.write(traceback.format_exc())
+
+                                            raise Exception
+
+                                        except PgWarning as w:
+
+                                            self.stdout.write("Warning: Postgres warning processing "
+                                                              "MRScan models for "
+                                                              "exam {}".format(study_meta_file))
+                                            self.stdout.write(w)
+                                            self.stdout.write(traceback.format_exc())
 
         end = time.time()
         self.stdout.write("Time elapsed: {}".format(end - start))
