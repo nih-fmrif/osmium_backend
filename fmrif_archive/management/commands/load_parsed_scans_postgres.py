@@ -1,5 +1,6 @@
 import rapidjson as json
 import traceback
+import time
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -33,6 +34,8 @@ class Command(BaseCommand):
         parser.add_argument("--days", nargs="*", type=str, default=[])
 
     def handle(self, *args, **options):
+
+        start = time.time()
 
         scanners = options['scanners']
         years = options['years']
@@ -301,3 +304,6 @@ class Command(BaseCommand):
                                             self.stdout.write("Warning: No dicom data found for scan {}"
                                                               "of exam {}".format(scan_name, study_meta_file))
                                             continue
+
+        end = time.time()
+        self.stdout.write("Time elapsed: {}".format(end - start))
