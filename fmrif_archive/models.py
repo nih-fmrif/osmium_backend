@@ -174,44 +174,42 @@ class DICOMFieldInstance(models.Model):
     string_single = models.CharField(max_length=400, blank=True, null=True)
     number_single = models.FloatField(null=True)
     b64_single = models.TextField(blank=True, null=True)
-    json_single = JSONField(blank=True, null=True)
     string_multi = ArrayField(models.CharField(max_length=400, blank=True, null=True), null=True)
     number_multi = ArrayField(models.FloatField(null=True), null=True)
     b64_multi = ArrayField(models.TextField(blank=True, null=True), null=True)
-    json_multi = ArrayField(JSONField(blank=True, null=True), null=True)
+    json_data = JSONField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
 
         is_multival = self.dicom_tag.is_multival
         json_type = self.dicom_tag.vr.json_type
 
-        if is_multival:
+        if json_type == "json":
+
+            if (self.string_single or self.number_single or self.b64_single
+                    or self.string_multi or self.number_multi or self.b64_multi):
+                raise ValidationError("Only the field json_data is allowed to be populated.")
+
+        elif is_multival:
 
             if json_type == "string":
 
-                if (self.string_single or self.number_single or self.b64_single or self.json_single
-                        or self.number_multi or self.b64_multi or self.json_multi):
+                if (self.string_single or self.number_single or self.b64_single or
+                        self.number_multi or self.b64_multi):
 
                     raise ValidationError("Only the field string_multi is allowed to be populated.")
 
             elif json_type == "number":
 
-                if (self.string_single or self.number_single or self.b64_single or self.json_single
-                        or self.string_multi or self.b64_multi or self.json_multi):
+                if (self.string_single or self.number_single or self.b64_single or
+                        self.string_multi or self.b64_multi):
 
                     raise ValidationError("Only the field number_multi is allowed to be populated.")
 
-            elif json_type == "json":
-
-                if (self.string_single or self.number_single or self.b64_single or self.json_single
-                        or self.string_multi or self.number_multi or self.b64_multi):
-
-                    raise ValidationError("Only the field json_multi is allowed to be populated.")
-
             elif json_type == "b64":
 
-                if (self.string_single or self.number_single or self.b64_single or self.json_single
-                        or self.string_multi or self.number_multi or self.json_multi):
+                if (self.string_single or self.number_single or self.b64_single or
+                        self.string_multi or self.number_multi):
 
                     raise ValidationError("Only the field b64_multi is allowed to be populated.")
 
@@ -219,29 +217,22 @@ class DICOMFieldInstance(models.Model):
 
             if json_type == "string":
 
-                if (self.number_single or self.b64_single or self.json_single
-                        or self.string_multi or self.number_multi or self.b64_multi or self.json_multi):
+                if (self.number_single or self.b64_single
+                        or self.string_multi or self.number_multi or self.b64_multi):
 
                     raise ValidationError("Only the field string_single is allowed to be populated.")
 
             elif json_type == "number":
 
-                if (self.string_single or self.b64_single or self.json_single
-                        or self.string_multi or self.number_multi or self.b64_multi or self.json_multi):
+                if (self.string_single or self.b64_single
+                        or self.string_multi or self.number_multi or self.b64_multi):
 
                     raise ValidationError("Only the field number_single is allowed to be populated.")
 
-            elif json_type == "json":
-
-                if (self.string_single or self.number_single or self.b64_single
-                        or self.string_multi or self.number_multi or self.json_multi or self.b64_multi):
-
-                    raise ValidationError("Only the field json_single is allowed to be populated.")
-
             elif json_type == "b64":
 
-                if (self.string_single or self.number_single or self.json_single
-                        or self.string_multi or self.number_multi or self.json_multi or self.b64_multi):
+                if (self.string_single or self.number_single
+                        or self.string_multi or self.number_multi or self.b64_multi):
 
                     raise ValidationError("Only the field b64_single is allowed to be populated.")
 
