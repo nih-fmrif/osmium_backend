@@ -4,12 +4,9 @@ import traceback
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from pathlib import Path
-from fmrif_archive.utils import dicom_json_to_keyword_and_flatten
-from pymongo import DESCENDING, InsertOne, WriteConcern
 from pymongo.errors import PyMongoError
 from datetime import datetime
 from fmrif_archive.utils import get_fmrif_scanner, parse_pn
-from collections import OrderedDict
 
 
 class Command(BaseCommand):
@@ -268,7 +265,7 @@ class Command(BaseCommand):
                                     except (KeyError, IndexError):
                                         birth_date = None
 
-                                    new_exam = OrderedDict({
+                                    new_exam = {
                                         'exam_id': exam_id,
                                         'revision': revision,
                                         'parser_version': parser_version,
@@ -289,7 +286,7 @@ class Command(BaseCommand):
                                         'sex': sex,
                                         'birth_date': birth_date,
                                         'dicom_attributes': []
-                                    })
+                                    }
 
                                     study_data = study_metadata['data']
 
