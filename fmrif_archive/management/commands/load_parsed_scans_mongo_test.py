@@ -17,11 +17,6 @@ class Command(BaseCommand):
 
     def parse_attribute(self, tag, scan_name, attribute):
 
-        vr = attribute.get('vr', None)
-
-        if not vr:
-            raise AttributeError
-
         values = attribute.get('Value', None)
 
         new_value = []
@@ -46,6 +41,12 @@ class Command(BaseCommand):
             else:
 
                 new_value = [val for val in values]
+
+        # Check all string values to ensure they dont exceed max mongo indexable size (1024 bytes)
+        # Restrict to len(string) < 1024
+        for val in new_value:
+            if (type(val) == "str") and (len(val) >= 1024):
+                raise AttributeError
 
         return {
             'tag': tag,
@@ -330,7 +331,7 @@ class Command(BaseCommand):
 
                                             if vr in ['OB', 'OD', 'OF', 'OL', 'OV', 'OW', 'SQ', 'UN']:
                                                 self.stdout.write(
-                                                    "WARNING: Tag encoding of type B64 or JSON not supported"
+                                                    "WARNING: Tag encoding of type B64 or JSON not supported "
                                                     "for querying purposes - Tag {} in scan {} "
                                                     "of study {}. Skipping.".format(tag, scan_name,
                                                                                     study_meta_file))
@@ -343,7 +344,7 @@ class Command(BaseCommand):
 
                                             except AttributeError:
                                                 self.stdout.write(
-                                                    "Unable to parse tag {} for "
+                                                    "Attribute value exceeds indexable size. Skipping. Tag {} in "
                                                     "scan of study {}".format(tag, scan_name, study_meta_file)
                                                 )
 
