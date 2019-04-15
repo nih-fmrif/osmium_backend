@@ -73,6 +73,7 @@ class MRScanSerializer(serializers.ModelSerializer):
     exam_revision = serializers.IntegerField(source="parent_exam.revision", read_only=True)
     exam_patient_name = serializers.CharField(source="parent_exam.name", read_only=True)
     exam_study_id = serializers.CharField(source="parent_exam.study_id", read_only=True)
+    exam_filename = serializers.CharField(source="parent_exam.filepath", read_only=True)
     dicom_files = DICOMInstanceSerializer(many=True, read_only=True)
 
     class Meta:
@@ -85,6 +86,7 @@ class MRScanSerializer(serializers.ModelSerializer):
             'exam_revision',
             'exam_patient_name',
             'exam_study_id',
+            'exam_filename',
             'name',
             'num_files',
             'series_date',
@@ -103,6 +105,7 @@ class MRScanSerializer(serializers.ModelSerializer):
             'exam_revision',
             'exam_patient_name',
             'exam_study_id',
+            'exam_filename',
             'name',
             'num_files',
             'series_date',
