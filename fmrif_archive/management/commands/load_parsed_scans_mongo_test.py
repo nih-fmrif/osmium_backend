@@ -21,6 +21,8 @@ class Command(BaseCommand):
 
         new_value = []
 
+        vr = attribute['vr']
+
         if values:
 
             if vr == 'PN':
