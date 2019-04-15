@@ -192,6 +192,20 @@ class AdvancedSearchView(APIView):
             }
         ]
 
+        test_q = [
+            {
+                "$match": {},
+            },
+            {
+                "$sort": {
+                    "study_datetime": -1
+                }
+            },
+            {
+                "$limit": 10,
+            }
+        ]
+
         if new_query or not count:
 
             count = list(collection.aggregate(count_query, allowDiskUse=True))

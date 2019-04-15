@@ -319,7 +319,25 @@ class Command(BaseCommand):
 
                                         for tag, attr in scan_dicom_data.items():
 
+                                            vr = attr.get('vr', None)
+
+                                            if not vr:
+                                                self.stdout.write(
+                                                    "WARNING: No VR found for tag {} in scan {} "
+                                                    "of study {}. Skipping.".format(tag, scan_name,
+                                                                                    study_meta_file))
+                                                continue
+
+                                            if vr in ['OB', 'OD', 'OF', 'OL', 'OV', 'OW', 'SQ', 'UN']:
+                                                self.stdout.write(
+                                                    "WARNING: Tag encoding of type B64 or JSON not supported"
+                                                    "for querying purposes - Tag {} in scan {} "
+                                                    "of study {}. Skipping.".format(tag, scan_name,
+                                                                                    study_meta_file))
+                                                continue
+
                                             try:
+
                                                 new_tag = self.parse_attribute(tag, scan_name, attr)
                                                 new_exam['dicom_attributes'].append(new_tag)
 

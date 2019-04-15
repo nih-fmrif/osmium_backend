@@ -14540,6 +14540,16 @@
             "DT"
         ]
     },
+    "0019109C": {
+        "can_query": true,
+        "keyword": "PulseSeqName",
+        "multival": false,
+        "name": "Pulse Sequence Name",
+        "retired": false,
+        "vr": [
+            "SH"
+        ]
+    },
     "0018A003": {
         "can_query": true,
         "keyword": "ContributionDescription",
