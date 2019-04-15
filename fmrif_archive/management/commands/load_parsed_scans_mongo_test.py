@@ -268,7 +268,7 @@ class Command(BaseCommand):
 
                                     try:
                                         birth_date = dicom_data["00100030"]['Value'][0]
-                                        birth_date = datetime.strptime(birth_date, '%Y%m%d').date()
+                                        birth_date = datetime.strptime(birth_date, '%Y%m%d')
                                     except (KeyError, IndexError):
                                         birth_date = None
 
