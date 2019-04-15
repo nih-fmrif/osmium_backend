@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from pathlib import Path
 from pymongo.errors import PyMongoError
+from pymongo import InsertOne
 from datetime import datetime
 from fmrif_archive.utils import get_fmrif_scanner, parse_pn
 
@@ -323,7 +324,7 @@ class Command(BaseCommand):
                                                     "scan of study {}".format(tag, scan_name, study_meta_file)
                                                 )
 
-                                    exams_to_create.append(new_exam)
+                                    exams_to_create.append(InsertOne(new_exam))
 
                         try:
 
