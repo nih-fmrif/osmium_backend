@@ -7,6 +7,7 @@ from pathlib import Path
 from pymongo.errors import PyMongoError
 from pymongo import InsertOne
 from datetime import datetime
+from datetime import time as datetime_time
 from fmrif_archive.utils import get_fmrif_scanner, parse_pn
 
 
@@ -226,6 +227,11 @@ class Command(BaseCommand):
                                     except (KeyError, IndexError):
                                         study_time = None
 
+                                    if study_time:
+                                        study_datetime = datetime.combine(study_date, study_time)
+                                    else:
+                                        study_datetime = datetime.combine(study_date, datetime_time.min)
+
                                     try:
                                         study_description = dicom_data["00081030"]['Value'][0]
                                     except (KeyError, IndexError):
@@ -275,8 +281,7 @@ class Command(BaseCommand):
                                         'station_name': station_name,
                                         'study_instance_uid': study_instance_uid,
                                         'study_id': study_id,
-                                        'study_date': study_date,
-                                        'study_time': study_time,
+                                        'study_datetime': study_datetime,
                                         'study_description': study_description,
                                         'protocol': protocol,
                                         'accession_number': accession_number,
