@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from pathlib import Path
 from fmrif_archive.utils import dicom_json_to_keyword_and_flatten
-from pymongo import DESCENDING, InsertOne, WriteConcern
+from pymongo import ASCENDING, DESCENDING, InsertOne, WriteConcern
 from pymongo.errors import PyMongoError
 from datetime import datetime
 from fmrif_archive.utils import get_fmrif_scanner, parse_pn
@@ -47,6 +47,11 @@ class Command(BaseCommand):
                 ('_metadata.revision', DESCENDING),
                 ('_metadata.scan_name', DESCENDING)
             ], unique=True, name="scan_uniqueness_constraint")
+
+            col.create_index([
+                ('dicom_attributes.tag', ASCENDING),
+                ('dicom_attributes.value', DESCENDING),
+            ], name="attribute_idx")
 
         if not collection.index_information().get('study_date_idx', None):
             collection.create_index([
