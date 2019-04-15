@@ -47,7 +47,7 @@ class Command(BaseCommand):
         # Check all string values to ensure they dont exceed max mongo indexable size (1024 bytes)
         # Restrict to len(string) < 1024
         for val in new_value:
-            if (type(val) == "str") and (len(val) >= 1024):
+            if (type(val) == str) and (len(val) >= 1024):
                 raise AttributeError
 
         return {
