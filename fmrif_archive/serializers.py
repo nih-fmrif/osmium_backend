@@ -125,6 +125,11 @@ class MRScanSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         dicom_metadata = instance.dicom_metadata
+
+        if not dicom_metadata:
+            data['dicom_metadata'] = {}
+            return data
+
         for tag, attrs in dicom_metadata.items():
 
             value = attrs.get('Value', None)
