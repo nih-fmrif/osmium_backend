@@ -94,6 +94,8 @@ class MRScan(BaseFileCollection):
     series_instance_uid = models.CharField(max_length=255, null=True)
     series_number = models.CharField(max_length=50, null=True)
     scan_sequence = models.CharField(max_length=255, null=True, blank=True)
+    dicom_metadata = JSONField(null=True, blank=True)
+    private_dicom_metadata = JSONField(null=True, blank=True)
 
 
 class FileCollection(BaseFileCollection):
