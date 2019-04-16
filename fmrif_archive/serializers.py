@@ -7,7 +7,6 @@ from fmrif_archive.models import (
     DICOMInstance,
 )
 from pathlib import Path
-from django.conf import settings
 
 
 class FileInstanceSerializer(serializers.ModelSerializer):
@@ -96,6 +95,8 @@ class MRScanSerializer(serializers.ModelSerializer):
             'series_instance_uid',
             'series_number',
             'scan_sequence',
+            'dicom_metadata',
+            'private_dicom_metadata',
             'dicom_files',
         )
 
@@ -115,31 +116,10 @@ class MRScanSerializer(serializers.ModelSerializer):
             'series_instance_uid',
             'series_number',
             'scan_sequence',
+            'dicom_metadata',
+            'private_dicom_metadata',
             'dicom_files',
         )
-
-    # def to_representation(self, instance):
-    #
-    #     data = super().to_representation(instance)
-    #
-    #     # Add dicom metadata from mongo db database
-    #     mongo_client = settings.MONGO_CLIENT
-    #     collection = mongo_client.image_archive.mr_scans
-    #
-    #     query = {
-    #         "_metadata.exam_id": data['exam_id'],
-    #         "_metadata.revision": data['exam_revision'],
-    #         "_metadata.scan_name": data['name'],
-    #     }
-    #
-    #     mr_scan = collection.find_one(query)
-    #
-    #     mr_scan.pop('_id')
-    #     mr_scan.pop('_metadata')
-    #
-    #     data['dicom_metadata'] = mr_scan if mr_scan else None
-    #
-    #     return data
 
 
 class FileCollectionPreviewSerializer(serializers.ModelSerializer):
