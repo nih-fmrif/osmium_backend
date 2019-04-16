@@ -129,7 +129,7 @@ class MRScanSerializer(serializers.ModelSerializer):
 
             value = attrs.get('Value', None)
             if value:
-                value = ", ".join(value)
+                value = ", ".join([str(v) for v in value])
 
             curr_tag = DICOM_TAG_TO_NAME.get(tag, None)
             name = curr_tag.get('name', None) if curr_tag else None
