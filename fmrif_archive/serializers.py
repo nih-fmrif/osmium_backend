@@ -6,6 +6,7 @@ from fmrif_archive.models import (
     File,
     DICOMInstance,
 )
+from fmrif_archive.mappings.json_mappings import DICOM_TAG_TO_NAME
 from pathlib import Path
 
 
@@ -120,6 +121,26 @@ class MRScanSerializer(serializers.ModelSerializer):
             'private_dicom_metadata',
             'dicom_files',
         )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        dicom_metadata = instance.dicom_metadata
+        for tag, attrs in dicom_metadata.items():
+
+            value = attrs.get('Value', None)
+            if value:
+                value = ", ".join(value)
+
+            curr_tag = DICOM_TAG_TO_NAME.get(tag, None)
+            name = curr_tag.get('name', None) if curr_tag else None
+
+            dicom_metadata[tag] = {
+                'name': name,
+                'value': value,
+            }
+
+        data['dicom_metadata'] = dicom_metadata
+        return data
 
 
 class FileCollectionPreviewSerializer(serializers.ModelSerializer):
