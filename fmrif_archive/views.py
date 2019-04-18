@@ -78,7 +78,6 @@ class BasicSearchView(generics.ListAPIView):
 
         scanners = self.request.query_params.getlist('scanners', None)
         if scanners:
-            scanners = scanners.split(",")
             query = reduce(lambda q, scanner: q | Q(station_name=scanner), scanners, Q())
             queryset = queryset.filter(query)
 
