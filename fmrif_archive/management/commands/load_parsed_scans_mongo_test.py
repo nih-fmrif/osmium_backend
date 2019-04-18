@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from pathlib import Path
 from pymongo.errors import PyMongoError
-from pymongo import InsertOne
+from pymongo import InsertOne, DESCENDING
 from datetime import datetime
 from datetime import time as datetime_time
 from fmrif_archive.utils import get_fmrif_scanner, parse_pn
@@ -83,20 +83,14 @@ class Command(BaseCommand):
         exam_collection = db.get_collection(options['exam_collection'])
         tag_collection = db.get_collection(options['tag_collection'])
 
-        # # Test whether the uniqueness constraint is defined, create it if not (this will only happen when collection
-        # # first created)
-        # if not collection.index_information().get('scan_uniqueness_constraint', None):
-        #
-        #     collection.create_index([
-        #         ('_metadata.exam_id', DESCENDING),
-        #         ('_metadata.revision', DESCENDING),
-        #         ('_metadata.scan_name', DESCENDING)
-        #     ], unique=True, name="scan_uniqueness_constraint")
-        #
-        # if not collection.index_information().get('study_date_idx', None):
-        #     collection.create_index([
-        #         ('_metadata.study_datetime', DESCENDING)
-        #     ], name="study_datetime_idx")
+        # Test whether the uniqueness constraint is defined, create it if not (this will only happen when collection
+        # first created)
+        if not exam_collection.index_information().get('exam_uniqueness_constraint', None):
+
+            exam_collection.create_index([
+                ('exam_id', DESCENDING),
+                ('revision', DESCENDING),
+            ], unique=True, name="exam_uniqueness_constraint")
 
         scanners = options['scanners']
         years = options['years']
