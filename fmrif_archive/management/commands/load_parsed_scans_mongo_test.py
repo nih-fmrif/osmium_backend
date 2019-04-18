@@ -137,13 +137,13 @@ class Command(BaseCommand):
 
                     for day_path in sorted(day_paths):
 
-                        tags_to_create = []
-
                         for exam_id in sorted([e for e in day_path.iterdir() if e.is_dir()]):
 
                             for pt_dir in sorted([p for p in exam_id.iterdir() if p.is_dir()]):
 
                                 for session_dir in sorted([s for s in pt_dir.iterdir() if s.is_dir()]):
+
+                                    tags_to_create = []
 
                                     study_metadata_files = list(session_dir.glob("study_*_metadata.txt"))
 
@@ -355,15 +355,15 @@ class Command(BaseCommand):
                                                     "scan of study {}".format(tag, scan_name, study_meta_file)
                                                 )
 
-                        try:
+                                    try:
 
-                            res = tag_collection.bulk_write(tags_to_create)
+                                        res = tag_collection.bulk_write(tags_to_create)
 
-                            self.stdout.write("Inserted {} tags to collection".format(res.inserted_count))
+                                        self.stdout.write("Inserted {} tags to collection".format(res.inserted_count))
 
-                        except PyMongoError as e:
+                                    except PyMongoError as e:
 
-                            self.stdout.write("Error: Unable to insert scan documents "
-                                              "for day ".format(day_path))
-                            self.stdout.write(e)
-                            self.stdout.write(traceback.format_exc())
+                                        self.stdout.write("Error: Unable to insert scan documents "
+                                                          "for day ".format(day_path))
+                                        self.stdout.write(e)
+                                        self.stdout.write(traceback.format_exc())
