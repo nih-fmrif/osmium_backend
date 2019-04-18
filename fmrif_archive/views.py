@@ -77,13 +77,10 @@ class BasicSearchView(generics.ListAPIView):
             queryset = queryset.filter(study_date=study_date)
 
         scanners = self.request.query_params.getlist('scanners', None)
-        if settings.DEBUG:
-            log = logging.getLogger('django.request')
-            log.info(scanners)
-        # if scanners:
-        #     scanners = scanners.split(",")
-        #     query = reduce(lambda q, scanner: q | Q(station_name=scanner), scanners, Q())
-        #     queryset = queryset.filter(query)
+        if scanners:
+            scanners = scanners.split(",")
+            query = reduce(lambda q, scanner: q | Q(station_name=scanner), scanners, Q())
+            queryset = queryset.filter(query)
 
         return queryset
 
