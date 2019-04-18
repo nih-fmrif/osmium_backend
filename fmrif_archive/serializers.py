@@ -194,6 +194,8 @@ class FileCollectionSerializer(serializers.ModelSerializer):
             'id',
             'exam_id',
             'exam_revision',
+            'exam_patient_name',
+            'exam_study_id',
             'name',
             'num_files',
             'files'
