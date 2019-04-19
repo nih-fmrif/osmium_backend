@@ -2,7 +2,7 @@ import logging
 import json
 import itertools
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from django.conf import settings as django_settings
 from django.core.management.base import BaseCommand, CommandError
 from pathlib import Path
@@ -44,7 +44,7 @@ class Command(BaseCommand):
             "--from",
             help="Parse from this date. Format: MMDDYYYY",
             type=str,
-            required=True
+            default=None
         )
 
         parser.add_argument(
@@ -104,22 +104,20 @@ class Command(BaseCommand):
         has_from = True if options['from'] else False
         has_to = True if options['to'] else False
 
-        if not has_from:
-            parser_log.error("--from parameter is REQUIRED (MMDDYYYY).")
-            return
-
         time_fmt = "%m%d%Y"
 
-        try:
+        if has_from:
 
-            if len(options['from']) != 8:
-                raise ValueError
+            try:
 
-            parser_settings["from"] = datetime.strptime(options['from'], time_fmt).date()
+                if len(options['from']) != 8:
+                    raise ValueError
 
-        except ValueError:
-            parser_log.error("Correct date format for --from field is MMDDYYYY")
-            return
+                parser_settings["from"] = datetime.strptime(options['from'], time_fmt).date()
+
+            except ValueError:
+                parser_log.error("Correct date format for --from field is MMDDYYYY")
+                return
 
         if has_to:
 
@@ -132,6 +130,7 @@ class Command(BaseCommand):
                 return
 
         else:
+
             parser_settings['to'] = datetime.today().date()
 
         parser_log.info("Runtime Settings:")
@@ -141,45 +140,69 @@ class Command(BaseCommand):
 
         parser_log.info("Searching for compressed Gold archives in data directory...")
 
-        delta = parser_settings['to'] - parser_settings['from']
-
-        dates = [(parser_settings['from'] + timedelta(i)) for i in range(delta.days + 1)]
+        delta = (parser_settings['to'] - parser_settings['from']) if has_from else None
 
         compressed_files = []
 
         for scanner in FMRIF_SCANNERS:
 
-            for date in dates:
+            if delta:
 
-                curr_year = str(date.year)
-                curr_month = str(date.month).rjust(2, "0")
-                curr_day = str(date.day).rjust(2, "0")
+                dates = [(parser_settings['from'] + timedelta(i)) for i in range(delta.days + 1)]
+
+            else:
+
+                scanner_dir = parser_settings['data_dir'] / scanner
+
+                years = sorted(
+                    [y for y in scanner_dir.iterdir() if (y.is_dir() and (len(y.name) == 4) and y.name.isdigit())]
+                )
+
+                if not years:
+                    continue
+
+                from_date = date(int(years[0].name), 1, 1)
+
+                delta = parser_settings['to'] - from_date
+
+                dates = [
+                    (parser_settings['from'] + timedelta(i)) for i in range(delta.days + 1) if
+                    (parser_settings['from'] + timedelta(i)).year in years
+                ]
+
+            for curr_date in dates:
+
+                curr_year = str(curr_date.year)
+                curr_month = str(curr_date.month).rjust(2, "0")
+                curr_day = str(curr_date.day).rjust(2, "0")
 
                 search_dir = parser_settings['data_dir'] / scanner / curr_year / curr_month / curr_day
 
-                parser_log.info("Searching in {}...".format(search_dir))
+                if search_dir.is_dir():
 
-                file_glob = [f for f in search_dir.glob("*/*.tgz") if f.is_file()]
+                    parser_log.info("Searching in {}...".format(search_dir))
 
-                for compressed_file in file_glob:
+                    file_glob = [f for f in search_dir.glob("*/*.tgz") if f.is_file()]
 
-                    # Check that the file has not been added to the DB already. If it has, skip.
+                    for compressed_file in file_glob:
 
-                    chksum = get_checksum(compressed_file)
+                        # Check that the file has not been added to the DB already. If it has, skip.
 
-                    if not chksum:
-                        parser_log.error("Error computing checksum for file {}. "
-                                         "Skipping this file.".format(compressed_file))
+                        chksum = get_checksum(compressed_file)
 
-                    exam_id = get_exam_id(chksum, compressed_file)
+                        if not chksum:
+                            parser_log.error("Error computing checksum for file {}. "
+                                             "Skipping this file.".format(compressed_file))
 
-                    exam = Exam.objects.filter(exam_id=exam_id)
+                        exam_id = get_exam_id(chksum, compressed_file)
 
-                    if not exam:
-                        compressed_files.append((compressed_file, chksum, exam_id))
-                    else:
-                        parser_log.warning("Exam {} already is already in the database. "
-                                           "Skipping.".format(compressed_file))
+                        exam = Exam.objects.filter(exam_id=exam_id)
+
+                        if not exam:
+                            compressed_files.append((compressed_file, chksum, exam_id))
+                        else:
+                            parser_log.warning("Exam {} already is already in the database. "
+                                               "Skipping.".format(compressed_file))
 
         if len(compressed_files) < 1:
             parser_log.info("No compressed files found. Exiting...")
