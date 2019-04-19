@@ -43,12 +43,14 @@ class Command(BaseCommand):
         parser.add_argument(
             "--from",
             help="Parse from this date. Format: MMDDYYYY",
+            type=str,
             required=True
         )
 
         parser.add_argument(
             "--to",
             default=None,
+            type=str,
             help="Parse to this date. Format: MMDDYYYY"
         )
 
