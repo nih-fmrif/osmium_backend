@@ -109,7 +109,7 @@ class Command(BaseCommand):
 
         try:
 
-            if len(options['from'] != 8):
+            if len(options['from']) != 8:
                 raise ValueError
 
             parser_settings["from"] = datetime.strptime(options['from'], time_fmt).date()
@@ -121,7 +121,7 @@ class Command(BaseCommand):
         if has_to:
 
             try:
-                if len(options['to'] != 8):
+                if len(options['to']) != 8:
                     raise ValueError
                 parser_settings["to"] = datetime.strptime(options['to'], time_fmt).date()
             except ValueError:
