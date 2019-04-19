@@ -86,12 +86,14 @@ class Command(BaseCommand):
             'version': PARSER_VERSION,
         }
 
+        if not parser_settings['work_dir'].is_dir():
+            parser_settings['work_dir'].mkdir(parents=True, exist_ok=True)
+
         log_fpath = parser_settings['work_dir'] / "gold_parsing_{}.log".format(
             datetime.today().strftime("%Y%m%d_%H%M%S")
         )
 
         if not log_fpath.is_file():
-            log_fpath.parent.mkdir(parents=True, exist_ok=True)
             log_fpath.touch(exist_ok=True)
 
         fh = logging.FileHandler(filename=str(log_fpath))
