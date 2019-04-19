@@ -157,6 +157,8 @@ class Command(BaseCommand):
 
                 search_dir = parser_settings['data_dir'] / scanner / curr_year / curr_month / curr_day
 
+                parser_log.info("Searching in {}...".format(search_dir))
+
                 file_glob = [f for f in search_dir.glob("*/*.tgz") if f.is_file()]
 
                 for compressed_file in file_glob:
