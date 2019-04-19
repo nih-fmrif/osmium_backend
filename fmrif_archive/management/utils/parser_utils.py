@@ -614,7 +614,7 @@ def parse_metadata(extracted_archives, parser_version, log=None):
 
             if not instance_files:
 
-                log.error("No instansce files found in subirectory {}".format(scan))
+                log.error("No instances files found in subdirectory {}".format(scan))
 
                 continue
 
