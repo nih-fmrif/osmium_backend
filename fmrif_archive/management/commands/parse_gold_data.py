@@ -108,7 +108,7 @@ class Command(BaseCommand):
             parser_log.error("--from parameter is REQUIRED (MMDDYYYY).")
             return
 
-        time_fmt = "%M%d%Y"
+        time_fmt = "%m%d%Y"
 
         try:
 
