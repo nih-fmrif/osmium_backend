@@ -1,17 +1,12 @@
-import os
-import time
 import logging
 import json
 import itertools
 
 from datetime import datetime, timedelta
-from pathlib import Path
-
 from django.conf import settings as django_settings
 from django.core.management.base import BaseCommand, CommandError
 from pathlib import Path
 from fmrif_archive.models import Exam
-from datetime import datetime
 
 from fmrif_archive.management.utils.parser_utils import (
     get_checksum,
@@ -88,6 +83,14 @@ class Command(BaseCommand):
             'batch_size': options['batch_size'],
             'version': PARSER_VERSION,
         }
+
+        log_fpath = parser_settings['work_dir'] / "gold_parsing_{}.log".format(
+            datetime.today().strftime("%Y%m%d_%H%M%S")
+        )
+
+        if not log_fpath.is_file():
+            log_fpath.parent.mkdir(parents=True, exist_ok=True)
+            log_fpath.touch(exist_ok=True)
 
         parser_log = logging.basicConfig(filename=str(
             Path(parser_settings['work_dir'] / "gold_parsing_{}".format(datetime.today().strftime("%Y%m%d_%H%M%S"))))
