@@ -81,8 +81,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        parser_log = logging.getLogger('')
-
         parser_settings = {
             'data_dir': Path(options['data_dir']),
             'work_dir': Path(options['work_dir']),
@@ -90,6 +88,10 @@ class Command(BaseCommand):
             'batch_size': options['batch_size'],
             'version': PARSER_VERSION,
         }
+
+        parser_log = logging.basicConfig(filename=str(
+            Path(parser_settings['work_dir'] / "gold_parsing_{}".format(datetime.today().strftime("%Y%m%d_%H%M%S"))))
+        )
 
         has_from = True if options['from'] else False
         has_to = True if options['to'] else False
@@ -216,4 +218,6 @@ class Command(BaseCommand):
 
             parser_log.info("Parsing DICOM metadata...")
 
-            parse_metadata(extracted_archives, parser_version=parser_settings['version'])
+            parse_metadata(extracted_archives, parser_version=parser_settings['version'], log=parser_log)
+
+        parser_log.close()
