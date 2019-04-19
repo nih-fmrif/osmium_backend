@@ -1,4 +1,4 @@
-import logging as python_logging
+import logging
 import json
 import itertools
 
@@ -94,8 +94,10 @@ class Command(BaseCommand):
             log_fpath.parent.mkdir(parents=True, exist_ok=True)
             log_fpath.touch(exist_ok=True)
 
-        python_logging.basicConfig(filename=str(log_fpath))
-        parser_log = python_logging
+        fh = logging.FileHandler(filename=str(log_fpath))
+        parser_log = logging.getLogger('parser')
+        parser_log.setLevel(logging.INFO)
+        parser_log.addHandler(fh)
 
         has_from = True if options['from'] else False
         has_to = True if options['to'] else False
@@ -223,5 +225,3 @@ class Command(BaseCommand):
             parser_log.info("Parsing DICOM metadata...")
 
             parse_metadata(extracted_archives, parser_version=parser_settings['version'], log=parser_log)
-
-        parser_log.close()
