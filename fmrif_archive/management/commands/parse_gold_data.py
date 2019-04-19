@@ -1,4 +1,4 @@
-import logging
+import logging as python_logging
 import json
 import itertools
 
@@ -94,9 +94,8 @@ class Command(BaseCommand):
             log_fpath.parent.mkdir(parents=True, exist_ok=True)
             log_fpath.touch(exist_ok=True)
 
-        parser_log = logging.basicConfig(filename=str(
-            Path(parser_settings['work_dir'] / "gold_parsing_{}".format(datetime.today().strftime("%Y%m%d_%H%M%S"))))
-        )
+        python_logging.basicConfig(filename=str(log_fpath))
+        parser_log = python_logging
 
         has_from = True if options['from'] else False
         has_to = True if options['to'] else False
