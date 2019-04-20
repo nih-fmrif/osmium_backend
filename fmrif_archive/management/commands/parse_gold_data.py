@@ -194,6 +194,8 @@ class Command(BaseCommand):
 
                 search_dir = parser_settings['data_dir'] / scanner / curr_year / curr_month / curr_day
 
+                parser_log.info("DEBUG: {}".format(search_dir))
+
                 if search_dir.is_dir():
 
                     parser_log.info("Searching in {}...".format(search_dir))
