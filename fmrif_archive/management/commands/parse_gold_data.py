@@ -170,9 +170,13 @@ class Command(BaseCommand):
 
                 scanner_dir = parser_settings['data_dir'] / scanner
 
+                parser_log.info("DEBUG: scanner dir {}".format(scanner_dir))
+
                 years = sorted(
                     [y for y in scanner_dir.iterdir() if (y.is_dir() and (len(y.name) == 4) and y.name.isdigit())]
                 )
+
+                parser_log.info("DEBUG: years {}".format("\n".join([str(y) for y in years])))
 
                 if not years:
                     continue
