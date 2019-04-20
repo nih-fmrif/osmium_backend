@@ -10,20 +10,25 @@ click==7.0                # via pip-tools
 django-cors-headers==2.5.0
 django-filter==2.1.0
 django-request-logging==0.6.7
-django==2.1.7
+django==2.2
 djangorestframework==3.9.1
 docopt==0.6.2             # via pipreqs
 gunicorn==19.9.0
 idna==2.8                 # via requests
 ldap3==2.5.2
+nibabel==2.4.0
+numpy==1.16.2             # via nibabel
 pip-tools==3.4.0
 pipreqs==0.4.9
 psycopg2-binary==2.7.7
 pyasn1==0.4.5             # via ldap3
+pycryptodome==3.8.1
+pydicom==1.2.2
 pymongo==3.7.2
 python-rapidjson==0.7.0
-pytz==2018.9              # via django
+pytz==2019.1              # via django
 requests==2.21.0          # via yarg
-six==1.12.0               # via pip-tools
-urllib3==1.24.1           # via requests
+six==1.12.0               # via nibabel, pip-tools
+sqlparse==0.3.0           # via django
+urllib3==1.24.2           # via requests
 yarg==0.1.9               # via pipreqs
