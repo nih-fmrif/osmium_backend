@@ -1,6 +1,6 @@
 pipreqs==0.4.9
 pip-tools==3.4.0
-django==2.1.7
+django==2.2
 djangorestframework==3.9.1
 psycopg2-binary==2.7.7
 gunicorn==19.9.0
@@ -10,3 +10,6 @@ django-request-logging==0.6.7
 python-rapidjson==0.7.0
 ldap3==2.5.2
 pymongo==3.7.2
+pycryptodome==3.8.1
+pydicom==1.2.2
+nibabel==2.4.0
