@@ -156,13 +156,13 @@ class Command(BaseCommand):
 
         parser_log.info("Searching for compressed Gold archives in data directory...")
 
-        delta = (parser_settings['to'] - parser_settings['from']) if has_from else None
-
         compressed_files = []
 
         for scanner in parser_settings['scanners']:
 
-            if delta:
+            if has_from:
+
+                delta = (parser_settings['to'] - parser_settings['from']) if has_from else None
 
                 dates = [(parser_settings['from'] + timedelta(i)) for i in range(delta.days + 1)]
 
@@ -182,8 +182,8 @@ class Command(BaseCommand):
                 delta = parser_settings['to'] - from_date
 
                 dates = [
-                    (parser_settings['from'] + timedelta(i)) for i in range(delta.days + 1) if
-                    (parser_settings['from'] + timedelta(i)).year in years
+                    (from_date + timedelta(i)) for i in range(delta.days + 1) if
+                    (from_date + timedelta(i)).year in years
                 ]
 
             for curr_date in dates:
