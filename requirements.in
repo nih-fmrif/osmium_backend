@@ -1,5 +1,6 @@
+pip==19.0.3
 pipreqs==0.4.9
-pip-tools==3.4.0
+pip-tools==3.6.0
 django==2.2
 djangorestframework==3.9.1
 psycopg2-binary==2.7.7
