@@ -170,18 +170,14 @@ class Command(BaseCommand):
 
                 scanner_dir = parser_settings['data_dir'] / scanner
 
-                parser_log.info("DEBUG: scanner dir {}".format(scanner_dir))
-
                 years = sorted(
-                    [y for y in scanner_dir.iterdir() if (y.is_dir() and (len(y.name) == 4) and y.name.isdigit())]
+                    [int(y.name) for y in scanner_dir.iterdir() if (y.is_dir() and (len(y.name) == 4) and y.name.isdigit())]
                 )
-
-                parser_log.info("DEBUG: years {}".format("\n".join([str(y) for y in years])))
 
                 if not years:
                     continue
 
-                from_date = date(int(years[0].name), 1, 1)
+                from_date = date(years[0], 1, 1)
 
                 delta = parser_settings['to'] - from_date
 
@@ -197,8 +193,6 @@ class Command(BaseCommand):
                 curr_day = str(curr_date.day).rjust(2, "0")
 
                 search_dir = parser_settings['data_dir'] / scanner / curr_year / curr_month / curr_day
-
-                parser_log.info("DEBUG: {}".format(search_dir))
 
                 if search_dir.is_dir():
 
