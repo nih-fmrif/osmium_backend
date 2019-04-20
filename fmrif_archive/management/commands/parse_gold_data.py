@@ -212,7 +212,7 @@ class Command(BaseCommand):
 
                         exam_id = get_exam_id(chksum, compressed_file)
 
-                        if parser_settings['new_exam']:
+                        if parser_settings['new_exams']:
                             exam = Exam.objects.filter(exam_id=exam_id)
                         else:
                             exam = None
