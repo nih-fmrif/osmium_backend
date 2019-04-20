@@ -69,6 +69,12 @@ class Command(BaseCommand):
         )
 
         parser.add_argument(
+            "--new_exams_only",
+            help="Parse only exams that have not already been added to osmium's DB",
+            action='store_true',
+        )
+
+        parser.add_argument(
             "--tgz_cores",
             help="Number of cores to use when extracting TGZ files",
             type=int,
@@ -90,6 +96,7 @@ class Command(BaseCommand):
             'data_dir': Path(options['data_dir']),
             'work_dir': Path(options['work_dir']),
             'scanners': options['scanners'],
+            'new_exams': options.get('new_exams_only', False),
             'tgz_cores': options['tgz_cores'],
             'batch_size': options['batch_size'],
             'version': PARSER_VERSION,
@@ -205,7 +212,10 @@ class Command(BaseCommand):
 
                         exam_id = get_exam_id(chksum, compressed_file)
 
-                        exam = Exam.objects.filter(exam_id=exam_id)
+                        if options['new_exam']:
+                            exam = Exam.objects.filter(exam_id=exam_id)
+                        else:
+                            exam = None
 
                         if not exam:
                             compressed_files.append((compressed_file, chksum, exam_id))
