@@ -55,6 +55,14 @@ class Command(BaseCommand):
         )
 
         parser.add_argument(
+            "--scanners",
+            default=FMRIF_SCANNERS,
+            help="Scanners to consider during parsing.",
+            choices=FMRIF_SCANNERS,
+            nargs="*"
+        )
+
+        parser.add_argument(
             "--work_dir",
             help="Path to working directory",
             default=Path(django_settings.PARSED_DATA_PATH) / datetime.today().strftime("%Y%m%d_%H%M%S")
@@ -81,6 +89,7 @@ class Command(BaseCommand):
         parser_settings = {
             'data_dir': Path(options['data_dir']),
             'work_dir': Path(options['work_dir']),
+            'scanners': options['scanners'],
             'tgz_cores': options['tgz_cores'],
             'batch_size': options['batch_size'],
             'version': PARSER_VERSION,
@@ -144,7 +153,7 @@ class Command(BaseCommand):
 
         compressed_files = []
 
-        for scanner in FMRIF_SCANNERS:
+        for scanner in parser_settings['scanners']:
 
             if delta:
 
