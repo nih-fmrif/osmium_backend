@@ -148,7 +148,7 @@ class MRBIDSAnnotation(models.Model):
         ('fmap', 'Fieldmap'),
     )
 
-    BIDS_MODALITY_CHOICES = {
+    MODALITY_CHOICES_BY_SCAN_TYPE = {
         "anat": (
             ("T1w", "T1 weighted"),
             ("T2w", "T2 weighted"),
@@ -184,6 +184,34 @@ class MRBIDSAnnotation(models.Model):
         )
     }
 
+    POOLED_MODALITY_CHOICES = (
+        ("T1w", "T1 weighted"),
+        ("T2w", "T2 weighted"),
+        ("T1rho", "T1 rho"),
+        ("T1map", "T1 map"),
+        ("T2map", "T2 map"),
+        ("T2star", "T2*"),
+        ("FLAIR", "FLAIR"),
+        ("FLASH", "FLASH"),
+        ("PD", "Proton density"),
+        ("PDmap", "Proton density map"),
+        ("PDT2", "Combined PD/T2"),
+        ("inplaneT1", "Inplane T1"),
+        ("inplaneT2", "Inplane T2"),
+        ("angio", "Angiography"),
+        ("bold", "BOLD"),
+        ("cbv", "CBV"),
+        ("phase", "Phase"),
+        ("dwi", "DWI"),
+        ("sbref", "Single-band reference image"),
+        ("phase_epi", "Phase Encoding EPI (PEpolar)"),
+        ("phasediff", "Phase Difference"),
+        ("magnitude1", "Magnitude Image 1"),
+        ("magnitude2", "Magnitude Image 2"),
+        ("phase1", "Phase Image 1"),
+        ("phase2", "Phase Image 2"),
+    )
+
     PHASE_ENC_DIRS_CHOICES = (
         ("i", "i"),
         ("j", "j"),
@@ -196,7 +224,7 @@ class MRBIDSAnnotation(models.Model):
     parent_scan = models.OneToOneField('MRScan', related_name='bids_annotation', on_delete=models.PROTECT)
 
     scan_type = models.CharField(max_length=4, choices=SCAN_TYPE_CHOICES)
-    modality = models.CharField(max_length=15, choices=list(itertools.chain.from_iterable(BIDS_MODALITY_CHOICES)))
+    modality = models.CharField(max_length=15, choices=POOLED_MODALITY_CHOICES)
     acquisition_label = models.CharField(max_length=255, blank=True, null=True)
     contrast_enhancement_label = models.CharField(max_length=255, blank=True, null=True)
     reconstruction_label = models.CharField(max_length=255, blank=True, null=True)
@@ -208,14 +236,14 @@ class MRBIDSAnnotation(models.Model):
 
     def save(self, *args, **kwargs):
 
-        if self.modality in [modality[0] for modality in self.BIDS_MODALITY_CHOICES['anat']]:
+        if self.modality in [modality[0] for modality in self.MODALITY_CHOICES_BY_SCAN_TYPE['anat']]:
 
             if self.task_label or self.phase_encoding_direction or self.echo_number or self.is_sbref:
                 raise ValidationError("Anatomical scans only support the following fields: "
                                       "'Scan Type', 'Modality', 'Acquisition Label', 'Contrast Enhancement Label' "
                                       "'Reconstruction Label', and 'Is de-facing mask?'")
 
-        elif self.modality in [modality[0] for modality in self.BIDS_MODALITY_CHOICES['func']]:
+        elif self.modality in [modality[0] for modality in self.MODALITY_CHOICES_BY_SCAN_TYPE['func']]:
 
             if self.is_defacemask:
                 raise ValidationError("Functional scans only support the following fields: "
@@ -224,7 +252,7 @@ class MRBIDSAnnotation(models.Model):
                                       "'Phase Encoding Direction', 'Echo Number', and 'Is single-band "
                                       "reference scan?'")
 
-        elif self.modality in [modality[0] for modality in self.BIDS_MODALITY_CHOICES['dwi']]:
+        elif self.modality in [modality[0] for modality in self.MODALITY_CHOICES_BY_SCAN_TYPE['dwi']]:
 
             if (self.contrast_enhancement_label or self.reconstruction_label or self.task_label or self.is_defacemask
                     or self.echo_number):
