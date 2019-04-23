@@ -160,12 +160,14 @@ class MRScanSerializer(serializers.ModelSerializer):
         )
 
     def to_representation(self, instance):
-        data = super().to_representation(instance)
-        dicom_metadata = instance.dicom_metadata
 
-        if not dicom_metadata:
+        data = super().to_representation(instance)
+
+        if not hasattr(instance, 'dicom_metadata'):
             data['dicom_metadata'] = {}
             return data
+
+        dicom_metadata = instance.dicom_metadata
 
         for tag, attrs in dicom_metadata.items():
 
@@ -183,7 +185,7 @@ class MRScanSerializer(serializers.ModelSerializer):
 
         data['dicom_metadata'] = dicom_metadata
 
-        if not instance.bids_annotation:
+        if not hasattr(instance, 'bids_annotation'):
 
             data['bids_annotation'] = {
                 "scan_type": "",
