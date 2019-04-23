@@ -183,6 +183,21 @@ class MRScanSerializer(serializers.ModelSerializer):
 
         data['dicom_metadata'] = dicom_metadata
 
+        if not instance.bids_annotation:
+
+            data['bids_annotation'] = {
+                "scan_type": "",
+                "modality": "",
+                "acquisition_label": "",
+                "contrast_enhancement_label": "",
+                "reconstruction_label": "",
+                "is_defacemask": False,
+                "task_label": "",
+                "phase_encoding_direction": "",
+                "echo_number": 1,
+                "is_sbref": False,
+            }
+
         return data
 
 
