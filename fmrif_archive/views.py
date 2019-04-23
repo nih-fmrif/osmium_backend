@@ -403,8 +403,8 @@ class MRBIDSAnnotationView(APIView):
         is_defacemask = request.POST.get('is_defacemask', None)
         task_label = request.POST.get('task_label', None)
         phase_encoding_direction = request.POST.get('phase_encoding_direction', None)
-        echo_number = request.POST('echo_number', None)
-        is_sbref = request.POST('is_sbref', None)
+        echo_number = request.POST.get('echo_number', None)
+        is_sbref = request.POST.get('is_sbref', None)
 
         MRBIDSAnnotation.objects.create(
             parent_scan=scan,
