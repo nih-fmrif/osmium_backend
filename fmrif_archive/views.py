@@ -380,8 +380,11 @@ class MRBIDSAnnotationView(APIView):
 
     def get_mr_scan(self, exam_id, revision, scan_name):
 
-        scan = MRScan.objects.filter(parent_exam__exam_id=exam_id, parent_exam__revision=revision,
-                                     name=scan_name).prefetch_related('bids_annotation').first()
+        try:
+            scan = MRScan.objects.get(parent_exam__exam_id=exam_id, parent_exam__revision=revision,
+                                      name=scan_name)
+        except MRScan.DoesNotExist:
+            raise NotFound
 
         return scan
 
@@ -403,7 +406,7 @@ class MRBIDSAnnotationView(APIView):
         echo_number = request.POST('echo_number', None)
         is_sbref = request.POST('is_sbref', None)
 
-        new_annotation = MRBIDSAnnotation.objects.create(
+        MRBIDSAnnotation.objects.create(
             parent_scan=scan,
             scan_type=scan_type,
             modality=modality,
@@ -416,9 +419,6 @@ class MRBIDSAnnotationView(APIView):
             echo_number=echo_number,
             is_sbref=is_sbref
         )
-
-        scan.bids_annotation = new_annotation
-        scan.save()
 
         return Response({"msg": "BIDS annotation added successfully."}, status=201)
 
