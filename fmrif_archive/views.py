@@ -1,4 +1,5 @@
 import os
+import rapidjson as json
 
 from django.http import HttpResponse
 from fmrif_archive.models import Exam, MRScan, FileCollection, MRBIDSAnnotation
@@ -22,7 +23,7 @@ from fmrif_base.permissions import HasActiveAccount
 from pathlib import Path
 from fmrif_archive.utils import get_fmrif_scanner
 from collections import OrderedDict
-import rapidjson as json
+from django.db import Error
 
 import logging
 from django.conf import settings
@@ -395,30 +396,37 @@ class MRBIDSAnnotationView(APIView):
         if hasattr(scan, 'bids_annotation'):
             raise ValidationError("Annotations for this scan already exist. Use PUT to update instead.")
 
-        scan_type = request.POST.get('scan_type', None)
-        modality = request.POST.get('modality', None)
-        acquisition_label = request.POST.get('acquisition_label', None)
-        contrast_enhancement_label = request.POST.get('contrast_enhancement_label', None)
-        reconstruction_label = request.POST.get('reconstruction_label', None)
-        is_defacemask = request.POST.get('is_defacemask', None)
-        task_label = request.POST.get('task_label', None)
-        phase_encoding_direction = request.POST.get('phase_encoding_direction', None)
-        echo_number = request.POST.get('echo_number', None)
-        is_sbref = request.POST.get('is_sbref', None)
+        post_params = json.loads(request.body.decode('utf-8'))
 
-        MRBIDSAnnotation.objects.create(
-            parent_scan=scan,
-            scan_type=scan_type,
-            modality=modality,
-            acquisition_label=acquisition_label,
-            contrast_enhancement_label=contrast_enhancement_label,
-            reconstruction_label=reconstruction_label,
-            is_defacemask=is_defacemask,
-            task_label=task_label,
-            phase_encoding_direction=phase_encoding_direction,
-            echo_number=echo_number,
-            is_sbref=is_sbref
-        )
+        scan_type = post_params.get('scan_type', None)
+        modality = post_params.get('modality', None)
+        acquisition_label = post_params.get('acquisition_label', None)
+        contrast_enhancement_label = post_params.get('contrast_enhancement_label', None)
+        reconstruction_label = post_params.get('reconstruction_label', None)
+        is_defacemask = post_params.get('is_defacemask', None)
+        task_label = post_params.get('task_label', None)
+        phase_encoding_direction = post_params.get('phase_encoding_direction', None)
+        echo_number = post_params.get('echo_number', None)
+        is_sbref = post_params.get('is_sbref', None)
+
+        try:
+
+            MRBIDSAnnotation.objects.create(
+                parent_scan=scan,
+                scan_type=scan_type,
+                modality=modality,
+                acquisition_label=acquisition_label,
+                contrast_enhancement_label=contrast_enhancement_label,
+                reconstruction_label=reconstruction_label,
+                is_defacemask=is_defacemask,
+                task_label=task_label,
+                phase_encoding_direction=phase_encoding_direction,
+                echo_number=echo_number,
+                is_sbref=is_sbref
+            )
+
+        except Error:
+            raise ValidationError("Unable to annotate scan. If this problem persists, please contact support.")
 
         return Response({"msg": "BIDS annotation added successfully."}, status=201)
 
@@ -426,21 +434,26 @@ class MRBIDSAnnotationView(APIView):
 
         scan = self.get_mr_scan(exam_id, revision, scan_name)
 
-        if not scan.bids_annotation:
+        if not hasattr(scan, 'bids_annotation'):
             raise ValidationError("Annotations for this scan do not exist. Use POST to create "
                                   "initial annotations instead.")
 
-        scan.bids_annotation.scan_type = request.POST.get('scan_type', None)
-        scan.bids_annotation.modality = request.POST.get('modality', None)
-        scan.bids_annotation.acquisition_label = request.POST.get('acquisition_label', None)
-        scan.bids_annotation.contrast_enhancement_label = request.POST.get('contrast_enhancement_label', None)
-        scan.bids_annotation.reconstruction_label = request.POST.get('reconstruction_label', None)
-        scan.bids_annotation.is_defacemask = request.POST.get('is_defacemask', None)
-        scan.bids_annotation.task_label = request.POST.get('task_label', None)
-        scan.bids_annotation.phase_encoding_direction = request.POST.get('phase_encoding_direction', None)
-        scan.bids_annotation.echo_number = request.POST.get('echo_number', None)
-        scan.bids_annotation.is_sbref = request.POST.get('is_sbref', None)
+        post_params = json.loads(request.body.decode('utf-8'))
 
-        scan.bids_annotation.save()
+        scan.bids_annotation.scan_type = post_params.get('scan_type', None)
+        scan.bids_annotation.modality = post_params.get('modality', None)
+        scan.bids_annotation.acquisition_label = post_params.get('acquisition_label', None)
+        scan.bids_annotation.contrast_enhancement_label = post_params.get('contrast_enhancement_label', None)
+        scan.bids_annotation.reconstruction_label = post_params.get('reconstruction_label', None)
+        scan.bids_annotation.is_defacemask = post_params.get('is_defacemask', None)
+        scan.bids_annotation.task_label = post_params.get('task_label', None)
+        scan.bids_annotation.phase_encoding_direction = post_params.get('phase_encoding_direction', None)
+        scan.bids_annotation.echo_number = post_params.get('echo_number', None)
+        scan.bids_annotation.is_sbref = post_params.get('is_sbref', None)
+
+        try:
+            scan.bids_annotation.save()
+        except Error:
+            raise ValidationError("Unable to annotate scan. If this problem persists, please contact support.")
 
         return Response({"msg": "BIDS annotation added successfully."}, status=201)
