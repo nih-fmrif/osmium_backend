@@ -397,7 +397,7 @@ class MRBIDSAnnotationView(APIView):
 
         scan_type = request.POST.get('scan_type', None)
         modality = request.POST.get('modality', None)
-        acquisition_label = request.POST('acquisition_label', None)
+        acquisition_label = request.POST.get('acquisition_label', None)
         contrast_enhancement_label = request.POST.get('contrast_enhancement_label', None)
         reconstruction_label = request.POST.get('reconstruction_label', None)
         is_defacemask = request.POST.get('is_defacemask', None)
@@ -432,14 +432,14 @@ class MRBIDSAnnotationView(APIView):
 
         scan.bids_annotation.scan_type = request.POST.get('scan_type', None)
         scan.bids_annotation.modality = request.POST.get('modality', None)
-        scan.bids_annotation.acquisition_label = request.POST('acquisition_label', None)
+        scan.bids_annotation.acquisition_label = request.POST.get('acquisition_label', None)
         scan.bids_annotation.contrast_enhancement_label = request.POST.get('contrast_enhancement_label', None)
         scan.bids_annotation.reconstruction_label = request.POST.get('reconstruction_label', None)
         scan.bids_annotation.is_defacemask = request.POST.get('is_defacemask', None)
         scan.bids_annotation.task_label = request.POST.get('task_label', None)
         scan.bids_annotation.phase_encoding_direction = request.POST.get('phase_encoding_direction', None)
-        scan.bids_annotation.echo_number = request.POST('echo_number', None)
-        scan.bids_annotation.is_sbref = request.POST('is_sbref', None)
+        scan.bids_annotation.echo_number = request.POST.get('echo_number', None)
+        scan.bids_annotation.is_sbref = request.POST.get('is_sbref', None)
 
         scan.bids_annotation.save()
 
