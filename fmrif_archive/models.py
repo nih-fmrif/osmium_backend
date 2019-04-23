@@ -1,3 +1,5 @@
+import itertools
+
 from django.db import models
 from fmrif_base.models import Protocol
 from django.utils import timezone
@@ -135,6 +137,120 @@ class DICOMInstance(BaseFile):
 class File(BaseFile):
 
     parent_collection = models.ForeignKey('FileCollection', related_name='files', on_delete=models.PROTECT)
+
+
+class MRBIDSAnnotation(models.Model):
+
+    SCAN_TYPE_CHOICES = (
+        ('anat', 'Anatomical'),
+        ('func', 'Functional'),
+        ('dwi', 'Diffusion'),
+        ('fmap', 'Fieldmap'),
+    )
+
+    BIDS_MODALITY_CHOICES = {
+        "anat": (
+            ("T1w", "T1 weighted"),
+            ("T2w", "T2 weighted"),
+            ("T1rho", "T1 rho"),
+            ("T1map", "T1 map"),
+            ("T2map", "T2 map"),
+            ("T2star", "T2*"),
+            ("FLAIR", "FLAIR"),
+            ("FLASH", "FLASH"),
+            ("PD", "Proton density"),
+            ("PDmap", "Proton density map"),
+            ("PDT2", "Combined PD/T2"),
+            ("inplaneT1", "Inplane T1"),
+            ("inplaneT2", "Inplane T2"),
+            ("angio", "Angiography"),
+        ),
+        "func": (
+            ("bold", "BOLD"),
+            ("cbv", "CBV"),
+            ("phase", "Phase"),
+        ),
+        "dwi": (
+            ("dwi", "DWI"),
+            ("sbref", "Single-band reference image"),
+        ),
+        "fmap": (
+            ("phase_epi", "Phase Encoding EPI (PEpolar)"),
+            ("phasediff", "Phase Difference"),
+            ("magnitude1", "Magnitude Image 1"),
+            ("magnitude2", "Magnitude Image 2"),
+            ("phase1", "Phase Image 1"),
+            ("phase2", "Phase Image 2"),
+        )
+    }
+
+    PHASE_ENC_DIRS_CHOICES = (
+        ("i", "i"),
+        ("j", "j"),
+        ("k", "k"),
+        ("i-", "i-"),
+        ("j-", "j-"),
+        ("k-", "k-"),
+    )
+
+    parent_scan = models.OneToOneField('MRScan', related_name='bids_annotation', on_delete=models.PROTECT)
+
+    scan_type = models.CharField(max_length=4, choices=SCAN_TYPE_CHOICES)
+    modality = models.CharField(max_length=15, choices=list(itertools.chain.from_iterable(BIDS_MODALITY_CHOICES)))
+    acquisition_label = models.CharField(max_length=255, blank=True, null=True)
+    contrast_enhancement_label = models.CharField(max_length=255, blank=True, null=True)
+    reconstruction_label = models.CharField(max_length=255, blank=True, null=True)
+    is_defacemask = models.BooleanField(null=True)
+    task_label = models.CharField(max_length=255, blank=True, null=True)
+    phase_encoding_direction = models.CharField(max_length=2, blank=True, null=True, choices=PHASE_ENC_DIRS_CHOICES)
+    echo_number = models.PositiveSmallIntegerField(null=True)
+    is_sbref = models.BooleanField(max_length=255)
+
+    def save(self, *args, **kwargs):
+
+        if self.modality in [modality[0] for modality in self.BIDS_MODALITY_CHOICES['anat']]:
+
+            if self.task_label or self.phase_encoding_direction or self.echo_number or self.is_sbref:
+                raise ValidationError("Anatomical scans only support the following fields: "
+                                      "'Scan Type', 'Modality', 'Acquisition Label', 'Contrast Enhancement Label' "
+                                      "'Reconstruction Label', and 'Is de-facing mask?'")
+
+        elif self.modality in [modality[0] for modality in self.BIDS_MODALITY_CHOICES['func']]:
+
+            if self.is_defacemask:
+                raise ValidationError("Functional scans only support the following fields: "
+                                      "'Scan Type', 'Modality', 'Task Label', 'Acquisition Label', "
+                                      "'Contrast Enhancement Label', 'Reconstruction Label', "
+                                      "'Phase Encoding Direction', 'Echo Number', and 'Is single-band "
+                                      "reference scan?'")
+
+        elif self.modality in [modality[0] for modality in self.BIDS_MODALITY_CHOICES['dwi']]:
+
+            if (self.contrast_enhancement_label or self.reconstruction_label or self.task_label or self.is_defacemask
+                    or self.echo_number):
+
+                raise ValidationError("Diffusion scans only support the following fields: "
+                                      "'Scan Type', 'Modality', 'Acquisition Label', "
+                                      "'Phase Encoding Direction', and 'Is single-band reference scan?'")
+        elif self.scan_type == "fmap":
+
+            if self.modality == "phase_epi":
+
+                if (self.reconstruction_label or self.is_defacemask or self.task_label or self.echo_number or
+                        self.is_sbref):
+
+                    raise ValidationError("Phase-encoding EPI fieldmap scans only support the following fields: "
+                                          "'Scan Type', 'Modality', 'Acquisition Label', 'Contrast Enhancement Label, "
+                                          "and 'Phase Encoding Direction'")
+            else:
+
+                if (self.contrast_enhancement_label or self.reconstruction_label or self.is_defacemask or
+                        self.task_label or self.phase_encoding_direction or self.echo_number or self.is_sbref):
+
+                    raise ValidationError("Non-PEpolar fieldmap scans only support the following fields: "
+                                          "'Scan Type', 'Modality', and 'Acquisition Label'")
+
+        super().save(*args, **kwargs)
 
 
 class DICOMValueRepresentation(models.Model):
