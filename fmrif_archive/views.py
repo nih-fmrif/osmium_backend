@@ -465,3 +465,24 @@ class MRBIDSAnnotationView(APIView):
             raise ValidationError("Unable to annotate scan. If this problem persists, please contact support.")
 
         return Response({"msg": "BIDS annotation added successfully."}, status=201)
+
+    def delete(self, request, exam_id, revision, scan_name):
+
+        scan = self.get_mr_scan(exam_id, revision, scan_name)
+
+        if not hasattr(scan, 'bids_annotation'):
+            raise ValidationError("Annotations for this scan do not exist.")
+
+        bids_annotation = scan.bids_annotation
+
+        try:
+            bids_annotation.delete()
+        except Error as e:
+
+            if settings.DEBUG:
+                raise e
+
+            raise ValidationError("Unable to delete bids annotations for this scan. "
+                                  "If this problem persists, please contact support.")
+
+        return Response({"msg": "BIDS annotation deleted successfully."}, status=200)

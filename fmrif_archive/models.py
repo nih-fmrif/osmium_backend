@@ -223,8 +223,8 @@ class MRBIDSAnnotation(models.Model):
 
     parent_scan = models.OneToOneField('MRScan', related_name='bids_annotation', on_delete=models.PROTECT)
 
-    scan_type = models.CharField(max_length=4, choices=SCAN_TYPE_CHOICES, blank=True)
-    modality = models.CharField(max_length=15, choices=POOLED_MODALITY_CHOICES, blank=True)
+    scan_type = models.CharField(max_length=4, choices=SCAN_TYPE_CHOICES)
+    modality = models.CharField(max_length=15, choices=POOLED_MODALITY_CHOICES)
     acquisition_label = models.CharField(max_length=255, blank=True, null=True)
     contrast_enhancement_label = models.CharField(max_length=255, blank=True, null=True)
     reconstruction_label = models.CharField(max_length=255, blank=True, null=True)
