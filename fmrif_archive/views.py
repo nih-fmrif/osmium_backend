@@ -392,7 +392,7 @@ class MRBIDSAnnotationView(APIView):
 
         scan = self.get_mr_scan(exam_id, revision, scan_name)
 
-        if scan.bids_annotation:
+        if hasattr(scan, 'bids_annotation'):
             raise ValidationError("Annotations for this scan already exist. Use PUT to update instead.")
 
         scan_type = request.POST.get('scan_type', None)
