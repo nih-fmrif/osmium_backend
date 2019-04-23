@@ -108,6 +108,7 @@ class MRScanSerializer(serializers.ModelSerializer):
     exam_patient_name = serializers.CharField(source="parent_exam.name", read_only=True)
     exam_study_id = serializers.CharField(source="parent_exam.study_id", read_only=True)
     exam_filename = serializers.CharField(source="parent_exam.filepath", read_only=True)
+    exam_station_name = serializers.CharField(source="parent_exam.station_name", read_only=True)
     dicom_files = DICOMInstanceSerializer(many=True, read_only=True)
     bids_annotation = MRBIDSAnnotationSerializer(read_only=True)
 
@@ -122,6 +123,7 @@ class MRScanSerializer(serializers.ModelSerializer):
             'exam_patient_name',
             'exam_study_id',
             'exam_filename',
+            'exam_station_name',
             'name',
             'num_files',
             'series_date',
@@ -144,6 +146,7 @@ class MRScanSerializer(serializers.ModelSerializer):
             'exam_patient_name',
             'exam_study_id',
             'exam_filename',
+            'exam_station_name',
             'name',
             'num_files',
             'series_date',
