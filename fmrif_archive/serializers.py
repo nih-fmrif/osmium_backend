@@ -198,6 +198,7 @@ class MRScanSerializer(serializers.ModelSerializer):
                 "phase_encoding_direction": "",
                 "echo_number": 1,
                 "is_sbref": False,
+                "has_bids_annotation": False
             }
 
         return data
