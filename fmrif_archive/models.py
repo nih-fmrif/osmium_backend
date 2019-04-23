@@ -223,8 +223,8 @@ class MRBIDSAnnotation(models.Model):
 
     parent_scan = models.OneToOneField('MRScan', related_name='bids_annotation', on_delete=models.PROTECT)
 
-    scan_type = models.CharField(max_length=4, choices=SCAN_TYPE_CHOICES)
-    modality = models.CharField(max_length=15, choices=POOLED_MODALITY_CHOICES)
+    scan_type = models.CharField(max_length=4, choices=SCAN_TYPE_CHOICES, blank=True)
+    modality = models.CharField(max_length=15, choices=POOLED_MODALITY_CHOICES, blank=True)
     acquisition_label = models.CharField(max_length=255, blank=True, null=True)
     contrast_enhancement_label = models.CharField(max_length=255, blank=True, null=True)
     reconstruction_label = models.CharField(max_length=255, blank=True, null=True)
@@ -235,6 +235,9 @@ class MRBIDSAnnotation(models.Model):
     is_sbref = models.BooleanField(null=True)
 
     def save(self, *args, **kwargs):
+
+        if self.scan_type and not self.modality:
+            raise ValidationError("If a Scan Type is specified, a Modality is required.")
 
         if self.modality in [modality[0] for modality in self.MODALITY_CHOICES_BY_SCAN_TYPE['anat']]:
 
