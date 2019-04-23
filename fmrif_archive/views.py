@@ -425,7 +425,11 @@ class MRBIDSAnnotationView(APIView):
                 is_sbref=is_sbref
             )
 
-        except Error:
+        except Error as e:
+
+            if settings.DEBUG:
+                raise e
+
             raise ValidationError("Unable to annotate scan. If this problem persists, please contact support.")
 
         return Response({"msg": "BIDS annotation added successfully."}, status=201)
@@ -453,7 +457,11 @@ class MRBIDSAnnotationView(APIView):
 
         try:
             scan.bids_annotation.save()
-        except Error:
+        except Error as e:
+
+            if settings.DEBUG:
+                raise e
+
             raise ValidationError("Unable to annotate scan. If this problem persists, please contact support.")
 
         return Response({"msg": "BIDS annotation added successfully."}, status=201)
