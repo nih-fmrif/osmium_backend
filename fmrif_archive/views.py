@@ -1,21 +1,20 @@
 import os
 
 from django.http import HttpResponse
-from fmrif_archive.models import Exam, MRScan, FileCollection
+from fmrif_archive.models import Exam, MRScan, FileCollection, MRBIDSAnnotation
 from fmrif_archive.serializers import (
     ExamPreviewSerializer,
     ExamSerializer,
     FileCollectionSerializer,
-    MRScanSerializer,
+    MRScanSerializer
 )
 from fmrif_archive.pagination import ExamSearchResultTablePagination
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
-from rest_framework.exceptions import ParseError
+from rest_framework.exceptions import ParseError, NotFound, ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
-from django.http import Http404
 from datetime import datetime
 from functools import reduce
 from django.db.models import Q
@@ -290,7 +289,7 @@ class ExamView(APIView):
                 'mr_scans', 'other_data').first()
 
         if not exam:
-            raise Http404
+            raise NotFound
 
         return exam
 
@@ -331,13 +330,13 @@ class MRScanView(APIView):
             exam = Exam.objects.filter(exam_id=exam_id, revision=revision).first()
 
         if not exam:
-            raise Http404
+            raise NotFound
 
         scan = MRScan.objects.filter(parent_exam=exam,
                                      name=scan_name).prefetch_related('dicom_files').first()
 
         if not scan:
-            raise Http404
+            raise NotFound
 
         return scan
 
@@ -359,13 +358,13 @@ class FileCollectionView(APIView):
             exam = Exam.objects.filter(exam_id=exam_id, revision=revision).first()
 
         if not exam:
-            raise Http404
+            raise NotFound
 
         file_collection = FileCollection.objects.filter(parent_exam=exam,
                                                         name=collection_name).prefetch_related('files').first()
 
         if not file_collection:
-            raise Http404
+            raise NotFound
 
         return file_collection
 
@@ -375,20 +374,73 @@ class FileCollectionView(APIView):
         return Response(serializer.data)
 
 
+class MRBIDSAnnotationView(APIView):
 
-# class TestView(APIView):
-#
-#     permission_classes = (HasActiveAccount,)
-#
-#     def get(self, request):
-#
-#         user_data = {
-#             'username': request.user.username,
-#             'employee_id': request.user.employee_id,
-#             'mail': request.user.mail,
-#             'first_name': request.user.first_name,
-#             'last_name': request.user.last_name,
-#             'user_principal_name': request.user.user_principal_name
-#         }
-#
-#         return Response(user_data)
+    permission_classes = (HasActiveAccount,)
+
+    def get_mr_scan(self, exam_id, revision, scan_name):
+
+        scan = MRScan.objects.filter(parent_exam__exam_id=exam_id, parent_exam__revision=revision,
+                                     name=scan_name).prefetch_related('bids_annotation').first()
+
+        return scan
+
+    def post(self, request, exam_id, revision, scan_name):
+
+        scan = self.get_mr_scan(exam_id, revision, scan_name)
+
+        if scan.bids_annotation:
+            raise ValidationError("Annotations for this scan already exist. Use PUT to update instead.")
+
+        scan_type = request.POST.get('scan_type', None)
+        modality = request.POST.get('modality', None)
+        acquisition_label = request.POST('acquisition_label', None)
+        contrast_enhancement_label = request.POST.get('contrast_enhancement_label', None)
+        reconstruction_label = request.POST.get('reconstruction_label', None)
+        is_defacemask = request.POST.get('is_defacemask', None)
+        task_label = request.POST.get('task_label', None)
+        phase_encoding_direction = request.POST.get('phase_encoding_direction', None)
+        echo_number = request.POST('echo_number', None)
+        is_sbref = request.POST('is_sbref', None)
+
+        new_annotation = MRBIDSAnnotation.objects.create(
+            parent_scan=scan,
+            scan_type=scan_type,
+            modality=modality,
+            acquisition_label=acquisition_label,
+            contrast_enhancement_label=contrast_enhancement_label,
+            reconstruction_label=reconstruction_label,
+            is_defacemask=is_defacemask,
+            task_label=task_label,
+            phase_encoding_direction=phase_encoding_direction,
+            echo_number=echo_number,
+            is_sbref=is_sbref
+        )
+
+        scan.bids_annotation = new_annotation
+        scan.save()
+
+        return Response({"msg": "BIDS annotation added successfully."}, status=201)
+
+    def put(self, request, exam_id, revision, scan_name):
+
+        scan = self.get_mr_scan(exam_id, revision, scan_name)
+
+        if not scan.bids_annotation:
+            raise ValidationError("Annotations for this scan do not exist. Use POST to create "
+                                  "initial annotations instead.")
+
+        scan.bids_annotation.scan_type = request.POST.get('scan_type', None)
+        scan.bids_annotation.modality = request.POST.get('modality', None)
+        scan.bids_annotation.acquisition_label = request.POST('acquisition_label', None)
+        scan.bids_annotation.contrast_enhancement_label = request.POST.get('contrast_enhancement_label', None)
+        scan.bids_annotation.reconstruction_label = request.POST.get('reconstruction_label', None)
+        scan.bids_annotation.is_defacemask = request.POST.get('is_defacemask', None)
+        scan.bids_annotation.task_label = request.POST.get('task_label', None)
+        scan.bids_annotation.phase_encoding_direction = request.POST.get('phase_encoding_direction', None)
+        scan.bids_annotation.echo_number = request.POST('echo_number', None)
+        scan.bids_annotation.is_sbref = request.POST('is_sbref', None)
+
+        scan.bids_annotation.save()
+
+        return Response({"msg": "BIDS annotation added successfully."}, status=201)
