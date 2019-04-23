@@ -232,7 +232,7 @@ class MRBIDSAnnotation(models.Model):
     task_label = models.CharField(max_length=255, blank=True, null=True)
     phase_encoding_direction = models.CharField(max_length=2, blank=True, null=True, choices=PHASE_ENC_DIRS_CHOICES)
     echo_number = models.PositiveSmallIntegerField(null=True)
-    is_sbref = models.BooleanField(max_length=255)
+    is_sbref = models.BooleanField(null=True)
 
     def save(self, *args, **kwargs):
 
