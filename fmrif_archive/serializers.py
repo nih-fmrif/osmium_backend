@@ -5,6 +5,7 @@ from fmrif_archive.models import (
     MRScan,
     File,
     DICOMInstance,
+    MRBIDSAnnotation,
 )
 from fmrif_archive.mappings.json_mappings import DICOM_TAG_TO_NAME
 from pathlib import Path
@@ -67,6 +68,39 @@ class MRScanPreviewSerializer(serializers.ModelSerializer):
         )
 
 
+class MRBIDSAnnotationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+
+        model = MRBIDSAnnotation
+
+        fields = (
+            'scan_type',
+            'modality',
+            'acquisition_label',
+            'contrast_enhancement_label',
+            'reconstruction_label',
+            'is_defacemask',
+            'task_label',
+            'phase_encoding_direction',
+            'echo_number',
+            'is_sbref',
+        )
+
+        read_only_fields = (
+            'scan_type',
+            'modality',
+            'acquisition_label',
+            'contrast_enhancement_label',
+            'reconstruction_label',
+            'is_defacemask',
+            'task_label',
+            'phase_encoding_direction',
+            'echo_number',
+            'is_sbref',
+        )
+
+
 class MRScanSerializer(serializers.ModelSerializer):
 
     exam_id = serializers.CharField(source="parent_exam.exam_id", read_only=True)
@@ -75,6 +109,7 @@ class MRScanSerializer(serializers.ModelSerializer):
     exam_study_id = serializers.CharField(source="parent_exam.study_id", read_only=True)
     exam_filename = serializers.CharField(source="parent_exam.filepath", read_only=True)
     dicom_files = DICOMInstanceSerializer(many=True, read_only=True)
+    bids_annotation = MRBIDSAnnotationSerializer(read_only=True)
 
     class Meta:
 
@@ -99,6 +134,7 @@ class MRScanSerializer(serializers.ModelSerializer):
             'dicom_metadata',
             'private_dicom_metadata',
             'dicom_files',
+            'bids_annotation',
         )
 
         read_only_fields = (
@@ -120,6 +156,7 @@ class MRScanSerializer(serializers.ModelSerializer):
             'dicom_metadata',
             'private_dicom_metadata',
             'dicom_files',
+            'bids_annotation',
         )
 
     def to_representation(self, instance):
@@ -145,6 +182,7 @@ class MRScanSerializer(serializers.ModelSerializer):
             }
 
         data['dicom_metadata'] = dicom_metadata
+
         return data
 
 
