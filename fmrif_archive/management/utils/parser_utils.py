@@ -481,7 +481,7 @@ def _get_dicom_meta(dcm, ge_extra_meta, log):
 
     try:
         dicom_dataset = pydicom.dcmread(str(dcm), stop_before_pixels=True)
-    except InvalidDicomError as e:
+    except (InvalidDicomError, IOError, OSError) as e:
         log.error("Unable to read: {}".format(str(dcm)))
         log.error(e)
         log.error(traceback.format_exc())
@@ -659,7 +659,7 @@ def parse_metadata(extracted_archives, parser_version, log=None):
 
                     break
 
-                except InvalidDicomError:
+                except (InvalidDicomError, IOError, OSError):
 
                     log.error("Unable to open invalid DICOM file {}".format(sample_file))
 
