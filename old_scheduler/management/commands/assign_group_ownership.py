@@ -87,6 +87,7 @@ class Command(BaseCommand):
             self.stdout.write("local bind hosts: {}".format(server.local_bind_hosts))
             self.stdout.write("local bind ports: {}".format(server.local_bind_ports))
             self.stdout.write("tunnel bindings: {}".format(server.tunnel_bindings))
+            self.stdout.write("is active: {}".format(server.is_active))
 
             time_fmt = "%m%d%Y"
 
