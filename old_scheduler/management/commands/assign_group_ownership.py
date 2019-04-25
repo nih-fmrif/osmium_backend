@@ -83,6 +83,8 @@ class Command(BaseCommand):
             )
         ) as server:
 
+            self.stdout.write("local addr for ssh tunnel: {}".format(server.local_bind_port))
+
             time_fmt = "%m%d%Y"
 
             from_date = None
