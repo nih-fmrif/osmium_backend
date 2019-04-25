@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'fmrif_base.apps.FMRIFBaseConfig',
     'fmrif_archive.apps.FMRIFArchiveConfig',
+    'old_scheduler.apps.OldSchedulerConfig',
     'django_filters',
     'corsheaders',
 ]

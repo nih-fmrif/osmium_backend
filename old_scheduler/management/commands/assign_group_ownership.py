@@ -113,7 +113,8 @@ class Command(BaseCommand):
 
             for scanner in options['scanners']:
 
-                sched_scanner = SchedulerScanner.objects.get(scanner=OSMIUM_TO_SCHEDULER_SCANNER_MAP[scanner])
+                sched_scanner = SchedulerScanner.objects.using(
+                    'old_scheduler').get(scanner=OSMIUM_TO_SCHEDULER_SCANNER_MAP[scanner])
 
                 if from_date and to_date:
 
@@ -153,7 +154,7 @@ class Command(BaseCommand):
 
                     schedule_range_days = [(min_exam_dt.date() + timedelta(days=i)) for i in range(exam_delta.days + 1)]
 
-                    scheduler_entries = list(SchedulerDate.objects.filter(
+                    scheduler_entries = list(SchedulerDate.objects.using('old_scheduler').filter(
                                                 Q(scanner=sched_scanner) &
                                                 Q(date__gte=min_exam_dt.date()) &
                                                 Q(date__lte=max_exam_dt.date())).order_by('+scheddate', '+schedhour')
