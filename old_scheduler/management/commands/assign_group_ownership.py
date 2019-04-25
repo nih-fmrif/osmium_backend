@@ -79,7 +79,7 @@ class Command(BaseCommand):
             ),
             local_bind_address=(
                 settings.DATABASES['old_scheduler']['HOST'],
-                settings.DATABASES['old_scheduler']['PORT']
+                int(settings.DATABASES['old_scheduler']['PORT'])
             )
         ) as server:
 
