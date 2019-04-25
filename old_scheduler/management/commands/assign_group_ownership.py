@@ -83,7 +83,10 @@ class Command(BaseCommand):
             )
         ) as server:
 
-            self.stdout.write("local addr for ssh tunnel: {}".format(server.local_bind_port))
+            self.stdout.write("local bind addresses: {}".format(server.local_bind_addresses))
+            self.stdout.write("local bind hosts: {}".format(server.local_bind_hosts))
+            self.stdout.write("local bind ports: {}".format(server.local_bind_ports))
+            self.stdout.write("tunnel bindings: {}".format(server.tunnel_bindings))
 
             time_fmt = "%m%d%Y"
 
