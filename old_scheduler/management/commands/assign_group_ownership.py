@@ -159,127 +159,136 @@ class Command(BaseCommand):
 
                     exam_dt_range = [(min_exam_dt + timedelta(seconds=i)) for i in range(exam_delta.seconds + 1)]
 
+                    self.stdout.write("min_exam_dt: {}".format(min_exam_dt))
+
+                    self.stdout.write("max_exam_dt: {}".format(max_exam_dt))
+
                     schedule_range_days = [(min_exam_dt.date() + timedelta(days=i)) for i in range(exam_delta.days + 1)]
+
+                    self.stdout.write("sched range days: {}".format(schedule_range_days))
 
                     scheduler_entries = list(SchedulerDate.objects.using('old_scheduler').filter(
                                                 Q(scanner=sched_scanner) &
                                                 Q(date__gte=min_exam_dt.date()) &
-                                                Q(date__lte=max_exam_dt.date())).order_by('+scheddate', '+schedhour')
+                                                Q(date__lte=max_exam_dt.date()))
                                              )
-                    blocks = {}
-                    curr_deptcode = None
-                    block_count = 0
 
-                    for sched_date in schedule_range_days:
+                    self.stdout.write("Sched entries: {}".format(scheduler_entries))
 
-                        for curr_hour in range(24):
-
-                            # Get schedule entry for this date and house
-                            curr_entry = None
-
-                            for entry in scheduler_entries:
-
-                                if entry.date == sched_date and entry.hour == curr_hour:
-
-                                    curr_entry = entry
-                                    break
-
-                            if not curr_entry:
-                                curr_entry = {"deptcode": "", "scheddate": sched_date, "schedhour": curr_hour}
-
-                            if curr_entry['deptcode'] != curr_deptcode:
-
-                                curr_deptcode = curr_entry['deptcode']
-
-                                block_count += 1
-
-                                blocks["{}".format(block_count)] = {
-                                    "deptcode": curr_entry["deptcode"],
-                                    "start_dt": datetime(sched_date.year,
-                                                         sched_date.month,
-                                                         sched_date.day,
-                                                         curr_hour, 0, 0),
-                                    "end_dt": datetime(sched_date.year,
-                                                       sched_date.month,
-                                                       sched_date.day,
-                                                       curr_hour, 59, 59),
-                                    "overlap": 0,
-                                }
-
-                            else:
-
-                                pos_start_dt = datetime(sched_date.year,
-                                                        sched_date.month,
-                                                        sched_date.day,
-                                                        curr_hour, 0, 0)
-
-                                pos_end_dt = datetime(sched_date.year,
-                                                      sched_date.month,
-                                                      sched_date.day,
-                                                      curr_hour, 59, 59)
-
-                                if pos_start_dt < blocks["{}".format(block_count)]["start_dt"]:
-                                    blocks["{}".format(block_count)]["start_dt"] = pos_start_dt
-
-                                if pos_end_dt > blocks["{}".format(block_count)]["end_dt"]:
-                                    blocks["{}".format(block_count)]["end_dt"] = pos_end_dt
-
-                    # Compute the time ranges for each block, based on obtained start/end datetimes
-
-                    for key in blocks.keys():
-
-                        curr_delta = blocks[key]['end_dt'] - blocks[key]['start_dt']
-                        blocks[key]["dt_range"] = [(blocks[key]['start_dt'] + timedelta(seconds=i)) for i in
-                                                   range(curr_delta.seconds + 1)]
-
-                    # Compute the overlaps for each block
-                    for key in blocks.keys():
-
-                        overlap_count = 0
-                        for dt in exam_dt_range:
-
-                            if dt in blocks[key]["dt_range"]:
-                                overlap_count += 1
-
-                        blocks[key]['overlap'] = overlap_count / len(blocks[key]['dt_range'])
-
-                    # Calculate group assignment based on max overlap
-                    assignment = []
-                    for key in blocks.keys():
-                        if not assignment:
-                            assignment.append(
-                                (
-                                    blocks[key]['deptcode'], blocks[key]['start_dt'],
-                                    blocks[key]['end_dt'], blocks[key]['overlap']
-                                )
-                            )
-                        else:
-                            if blocks[key]['overlap'] > assignment[-1][-1]:
-                                assignment[-1] = (
-                                    blocks[key]['deptcode'], blocks[key]['start_dt'],
-                                    blocks[key]['end_dt'], blocks[key]['overlap']
-                                )
-                            elif blocks[key]['overlap'] == assignment[-1][-1]:
-                                assignment.append(
-                                    (
-                                        blocks[key]['deptcode'], blocks[key]['start_dt'],
-                                        blocks[key]['end_dt'], blocks[key]['overlap']
-                                    )
-                                )
-
-                    if len(assignment) > 1:
-
-                        self.stdout.write("WARNING: Unable to assign exam to group - several matching"
-                                          "time overlap percentages with scheduler: ")
-                        for a in assignment:
-                            self.stdout.write("deptcode: '{}', start_dt: {}, "
-                                              "end_dt: {}, overlap %: {}".format(a[0], a[1], a[2], a[3]))
-
-                    elif len(assignment) == 1:
-
-                        self.stdout.write("Exam pk {} assigned to deptcode: '{}', overlap: {}".format(
-                            exam.pk, assignment[0][0], assignment[0][-1]))
-
-                    else:
-
-                        self.stdout.write("ERROR: No assignments found for exam pk {}".format(exam.pk))
+                    # blocks = {}
+                    # curr_deptcode = None
+                    # block_count = 0
+                    #
+                    # for sched_date in schedule_range_days:
+                    #
+                    #     for curr_hour in range(24):
+                    #
+                    #         # Get schedule entry for this date and house
+                    #         curr_entry = None
+                    #
+                    #         for entry in scheduler_entries:
+                    #
+                    #             if entry.date == sched_date and entry.hour == curr_hour:
+                    #
+                    #                 curr_entry = entry
+                    #                 break
+                    #
+                    #         if not curr_entry:
+                    #             curr_entry = {"deptcode": "", "scheddate": sched_date, "schedhour": curr_hour}
+                    #
+                    #         if curr_entry['deptcode'] != curr_deptcode:
+                    #
+                    #             curr_deptcode = curr_entry['deptcode']
+                    #
+                    #             block_count += 1
+                    #
+                    #             blocks["{}".format(block_count)] = {
+                    #                 "deptcode": curr_entry["deptcode"],
+                    #                 "start_dt": datetime(sched_date.year,
+                    #                                      sched_date.month,
+                    #                                      sched_date.day,
+                    #                                      curr_hour, 0, 0),
+                    #                 "end_dt": datetime(sched_date.year,
+                    #                                    sched_date.month,
+                    #                                    sched_date.day,
+                    #                                    curr_hour, 59, 59),
+                    #                 "overlap": 0,
+                    #             }
+                    #
+                    #         else:
+                    #
+                    #             pos_start_dt = datetime(sched_date.year,
+                    #                                     sched_date.month,
+                    #                                     sched_date.day,
+                    #                                     curr_hour, 0, 0)
+                    #
+                    #             pos_end_dt = datetime(sched_date.year,
+                    #                                   sched_date.month,
+                    #                                   sched_date.day,
+                    #                                   curr_hour, 59, 59)
+                    #
+                    #             if pos_start_dt < blocks["{}".format(block_count)]["start_dt"]:
+                    #                 blocks["{}".format(block_count)]["start_dt"] = pos_start_dt
+                    #
+                    #             if pos_end_dt > blocks["{}".format(block_count)]["end_dt"]:
+                    #                 blocks["{}".format(block_count)]["end_dt"] = pos_end_dt
+                    #
+                    # # Compute the time ranges for each block, based on obtained start/end datetimes
+                    #
+                    # for key in blocks.keys():
+                    #
+                    #     curr_delta = blocks[key]['end_dt'] - blocks[key]['start_dt']
+                    #     blocks[key]["dt_range"] = [(blocks[key]['start_dt'] + timedelta(seconds=i)) for i in
+                    #                                range(curr_delta.seconds + 1)]
+                    #
+                    # # Compute the overlaps for each block
+                    # for key in blocks.keys():
+                    #
+                    #     overlap_count = 0
+                    #     for dt in exam_dt_range:
+                    #
+                    #         if dt in blocks[key]["dt_range"]:
+                    #             overlap_count += 1
+                    #
+                    #     blocks[key]['overlap'] = overlap_count / len(blocks[key]['dt_range'])
+                    #
+                    # # Calculate group assignment based on max overlap
+                    # assignment = []
+                    # for key in blocks.keys():
+                    #     if not assignment:
+                    #         assignment.append(
+                    #             (
+                    #                 blocks[key]['deptcode'], blocks[key]['start_dt'],
+                    #                 blocks[key]['end_dt'], blocks[key]['overlap']
+                    #             )
+                    #         )
+                    #     else:
+                    #         if blocks[key]['overlap'] > assignment[-1][-1]:
+                    #             assignment[-1] = (
+                    #                 blocks[key]['deptcode'], blocks[key]['start_dt'],
+                    #                 blocks[key]['end_dt'], blocks[key]['overlap']
+                    #             )
+                    #         elif blocks[key]['overlap'] == assignment[-1][-1]:
+                    #             assignment.append(
+                    #                 (
+                    #                     blocks[key]['deptcode'], blocks[key]['start_dt'],
+                    #                     blocks[key]['end_dt'], blocks[key]['overlap']
+                    #                 )
+                    #             )
+                    #
+                    # if len(assignment) > 1:
+                    #
+                    #     self.stdout.write("WARNING: Unable to assign exam to group - several matching"
+                    #                       "time overlap percentages with scheduler: ")
+                    #     for a in assignment:
+                    #         self.stdout.write("deptcode: '{}', start_dt: {}, "
+                    #                           "end_dt: {}, overlap %: {}".format(a[0], a[1], a[2], a[3]))
+                    #
+                    # elif len(assignment) == 1:
+                    #
+                    #     self.stdout.write("Exam pk {} assigned to deptcode: '{}', overlap: {}".format(
+                    #         exam.pk, assignment[0][0], assignment[0][-1]))
+                    #
+                    # else:
+                    #
+                    #     self.stdout.write("ERROR: No assignments found for exam pk {}".format(exam.pk))
