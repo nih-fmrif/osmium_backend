@@ -83,11 +83,12 @@ class Command(BaseCommand):
             )
         ) as server:
 
-            self.stdout.write("local bind addresses: {}".format(server.local_bind_addresses))
-            self.stdout.write("local bind hosts: {}".format(server.local_bind_hosts))
-            self.stdout.write("local bind ports: {}".format(server.local_bind_ports))
-            self.stdout.write("tunnel bindings: {}".format(server.tunnel_bindings))
-            self.stdout.write("is active: {}".format(server.is_active))
+            self.stdout.write("SSH tunnel config: ")
+            self.stdout.write("Local bind addresses: {}".format(server.local_bind_addresses))
+            self.stdout.write("Local bind hosts: {}".format(server.local_bind_hosts))
+            self.stdout.write("Local bind ports: {}".format(server.local_bind_ports))
+            self.stdout.write("Tunnel bindings: {}".format(server.tunnel_bindings))
+            self.stdout.write("Server tunnel is active: {}\n\n".format(server.is_active))
 
             time_fmt = "%m%d%Y"
 
