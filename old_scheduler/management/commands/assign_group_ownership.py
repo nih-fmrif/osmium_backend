@@ -166,8 +166,6 @@ class Command(BaseCommand):
 
                     self.stdout.write("max_exam_dt: {}".format(max_exam_dt))
 
-                    self.stdout.write("exam_dt_range: {}".format(exam_dt_range))
-
                     schedule_range_days = [(min_exam_dt.date() + timedelta(days=i)) for i in range(exam_delta.days + 1)]
 
                     self.stdout.write("sched range days: {}".format(schedule_range_days))
