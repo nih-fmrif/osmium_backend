@@ -147,6 +147,8 @@ class Command(BaseCommand):
 
                     mr_scans_date_times = exam.mr_scans.values_list('series_date', 'series_time')
 
+                    self.stdout.write("mr_scans_date_time: {}".format(mr_scans_date_times))
+
                     exam_datetimes = [datetime.combine(dt[0], dt[1]) for dt in mr_scans_date_times]
 
                     exam_datetimes.append(datetime.combine(exam.study_date, exam.study_time))
