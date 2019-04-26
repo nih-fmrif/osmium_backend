@@ -1,7 +1,5 @@
-import itertools
-
 from django.db import models
-from fmrif_base.models import Protocol
+from fmrif_base.models import Protocol, ResearchGroup
 from django.utils import timezone
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.exceptions import ValidationError
@@ -52,6 +50,7 @@ class Exam(models.Model):
     study_time = models.TimeField(null=True)
     study_description = models.CharField(max_length=64, null=True)
     protocol = models.ForeignKey(Protocol, on_delete=models.PROTECT, null=True, related_name='protocol_exams')
+    research_group = models.ForeignKey(ResearchGroup, on_delete=models.PROTECT, null=True, related_name='group_exams')
     accession_number = models.CharField(max_length=16, null=True)
 
     # Basic patient metadata for basic search functionality
@@ -280,109 +279,5 @@ class MRBIDSAnnotation(models.Model):
 
                     raise ValidationError("Non-PEpolar fieldmap scans only support the following fields: "
                                           "'Scan Type', 'Modality', and 'Acquisition Label'")
-
-        super().save(*args, **kwargs)
-
-
-class DICOMValueRepresentation(models.Model):
-
-    JSON_TYPES = (
-        ('string', 'string'),
-        ('number', 'number'),
-        ('json', 'json'),  # json encoded saved as string
-        ('b64', 'b64'),  # base64 encoded string
-    )
-    symbol = models.CharField(max_length=2, primary_key=True)
-    type = models.CharField(max_length=255)
-    json_type = models.CharField(max_length=6, choices=JSON_TYPES)
-
-
-class DICOMTag(models.Model):
-
-    tag = models.CharField(max_length=8)
-    name = models.CharField(max_length=255, null=True, blank=True)
-    keyword = models.CharField(max_length=255, null=True, blank=True)
-    vr = models.ForeignKey(DICOMValueRepresentation, on_delete=models.PROTECT, related_name='dicom_tags', null=True)
-    is_multival = models.NullBooleanField(null=True, default=False)  # Private fields saved as multival fields
-    is_retired = models.NullBooleanField(null=True, default=False)
-    can_query = models.NullBooleanField(default=True)
-
-    class Meta:
-
-        unique_together = (
-            'tag',
-            'vr',
-        )
-
-
-class DICOMFieldInstance(models.Model):
-
-    dicom_tag = models.ForeignKey(DICOMTag, on_delete=models.PROTECT, related_name='field_instances')
-    parent_scan = models.ForeignKey(MRScan, on_delete=models.PROTECT, related_name='dicom_fields')
-
-    string_single = models.TextField(blank=True, null=True)
-    number_single = models.FloatField(null=True)
-    b64_single = models.TextField(blank=True, null=True)
-    string_multi = ArrayField(models.TextField(blank=True, null=True), null=True)
-    number_multi = ArrayField(models.FloatField(null=True), null=True)
-    b64_multi = ArrayField(models.TextField(blank=True, null=True), null=True)
-    json_data = JSONField(blank=True, null=True)
-
-    def save(self, *args, **kwargs):
-
-        is_multival = self.dicom_tag.is_multival
-        json_type = self.dicom_tag.vr.json_type
-
-        if json_type == "json":
-
-            if (self.string_single or self.number_single or self.b64_single
-                    or self.string_multi or self.number_multi or self.b64_multi):
-                raise ValidationError("Only the field json_data is allowed to be populated.")
-
-        elif is_multival:
-
-            if json_type == "string":
-
-                if (self.string_single or self.number_single or self.b64_single or
-                        self.number_multi or self.b64_multi):
-
-                    raise ValidationError("Only the field string_multi is allowed to be populated.")
-
-            elif json_type == "number":
-
-                if (self.string_single or self.number_single or self.b64_single or
-                        self.string_multi or self.b64_multi):
-
-                    raise ValidationError("Only the field number_multi is allowed to be populated.")
-
-            elif json_type == "b64":
-
-                if (self.string_single or self.number_single or self.b64_single or
-                        self.string_multi or self.number_multi):
-
-                    raise ValidationError("Only the field b64_multi is allowed to be populated.")
-
-        else:
-
-            if json_type == "string":
-
-                if (self.number_single or self.b64_single
-                        or self.string_multi or self.number_multi or self.b64_multi):
-
-                    raise ValidationError("Only the field string_single is allowed to be populated.")
-
-            elif json_type == "number":
-
-                if (self.string_single or self.b64_single
-                        or self.string_multi or self.number_multi or self.b64_multi):
-
-                    raise ValidationError("Only the field number_single is allowed to be populated.")
-
-            elif json_type == "b64":
-
-                if (self.string_single or self.number_single
-                        or self.string_multi or self.number_multi or self.b64_multi):
-
-                    raise ValidationError("Only the field b64_single is allowed to be populated.")
 
         super().save(*args, **kwargs)
