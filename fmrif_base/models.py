@@ -147,7 +147,7 @@ class Protocol(models.Model):
                                                related_name='protocols_pi',
                                                on_delete=models.PROTECT,
                                                null=True)
-    research_group = models.ForeignKey('ResearchGroup', related_name='protocols', on_delete=models.PROTECT)
+    research_group = models.ForeignKey('ResearchGroup', related_name='protocols', on_delete=models.PROTECT, null=True)
     is_active = models.BooleanField(default=True)
 
 
