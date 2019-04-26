@@ -120,8 +120,10 @@ class Command(BaseCommand):
 
             for scanner in options['scanners']:
 
-                # sched_scanner = SchedulerScanner.objects.using(
-                #     'old_scheduler').get(scanner=OSMIUM_TO_SCHEDULER_SCANNER_MAP[scanner])
+                sched_scanner = SchedulerScanner.objects.using(
+                    'old_scheduler').get(scanner=OSMIUM_TO_SCHEDULER_SCANNER_MAP[scanner])
+
+                self.stdout.write("sched scanner: {}".format(sched_scanner))
 
                 if from_date and to_date:
 
