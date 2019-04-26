@@ -127,7 +127,7 @@ class Command(BaseCommand):
 
                     exams = Exam.objects.filter(Q(station_name=scanner) &
                                                 Q(study_date__gte=from_date) &
-                                                Q(study_date_lte=to_date)).prefetch_related('mr_scans')
+                                                Q(study_date__lte=to_date)).prefetch_related('mr_scans')
 
                 elif from_date:
 
