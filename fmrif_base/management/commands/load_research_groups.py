@@ -132,7 +132,7 @@ class Command(BaseCommand):
                                 if curr_institute == parent_institute:
                                     continue  # Dont check twice
 
-                                pi_data = self.get_ldap_credentials(pi_cn, parent_institute)
+                                pi_data = self.get_ldap_credentials(pi_cn, curr_institute)
 
                                 if pi_data:
                                     break
