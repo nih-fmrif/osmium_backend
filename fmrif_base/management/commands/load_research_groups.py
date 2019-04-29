@@ -163,7 +163,7 @@ class Command(BaseCommand):
 
                 ResearchGroup.objects.create(
                     code=code if code else None,
-                    name=name.strip('"') if name else old_name,
+                    name=name.strip('"') if name else old_name.strip('"'),
                     old_name=old_name.strip('"') if name else None,
                     short_name=short_name if short_name else None,
                     principal_investigator=pi,
