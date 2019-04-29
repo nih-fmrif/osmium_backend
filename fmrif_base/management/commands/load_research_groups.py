@@ -83,7 +83,10 @@ class Command(BaseCommand):
 
         with open(groups_fpath, "rt", encoding='iso-8859-1') as infile:
 
-            for line in infile:
+            for line_num, line in enumerate(infile, 1):
+
+                if line_num == 1:
+                    continue  # Skip header line
 
                 code, old_name, name, short_name, is_active, \
                     parent_institute, pi_cn, \
