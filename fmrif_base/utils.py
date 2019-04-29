@@ -11,7 +11,7 @@ def get_ldap_credentials(employee_id):
 
     # Get the list of members with access to Gold
     members = None
-    if conn.search(settings.AD_GROUPS['gold_users_list'], '(member=*)', attributes=['member']):
+    if conn.search(settings.AD_GROUPS['gold_users'], '(member=*)', attributes=['member']):
         members = conn.entries[0].member.value
 
     # Find the relevant metadata for the employee id of interest

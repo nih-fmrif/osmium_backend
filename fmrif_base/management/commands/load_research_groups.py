@@ -12,75 +12,64 @@ User = get_user_model()
 
 class Command(BaseCommand):
 
-    def get_ldap_credentials(self, cn):
+    def get_ldap_credentials(self, cn, institute):
         # Open LDAP connection
         server = Server(settings.LDAP_SERVER, use_ssl=True, get_info=ALL)
         conn = Connection(server, settings.FMRIF_SVC_ACCT, settings.FMRIF_SVC_ACCT_PWD, auto_bind=True)
         conn.start_tls()
 
-        # Get the list of members with access to Gold
-        members = None
-
         # Check the different user group lists to try to find PIs accounts in case they are listed as owning a group
         # but don't have current access through the Gold users list (e.g. NIMH Director Reserve)
 
-        for ad_group in settings.AD_GROUPS.values():
+        self.stdout.write("Checking for user {} in {}'s user list...".format(cn, institute))
 
-            self.stdout.write("Checking {}...".format(ad_group))
+        if conn.search(settings.AD_GROUPS['nih_users'].format(institute), '(CN={})'.format(cn),
+                       attributes=['employeeID', 'sn', 'givenName', 'userPrincipalName', 'cn', 'mail']):
 
-            if conn.search(ad_group, '(member=*)', attributes=['member']):
-                members = conn.entries[0].member.value
+            member = conn.entries[0] if conn.entries else None
 
-            # Find the relevant metadata for the employee id of interest
-            for member in members:
+            if member:
 
-                if conn.search(member, "(cn=*)", attributes=['employeeID', 'sn', 'givenName',
-                                                             'userPrincipalName', 'cn', 'mail']):
+                try:
+                    employee_id = member.employeeID.value
+                except LDAPCursorError:
+                    employee_id = None
 
-                    results = conn.entries[0]
+                try:
+                    last_name = member.sn.value
+                except LDAPCursorError:
+                    last_name = None
+                try:
+                    first_name = member.givenName.value
+                except LDAPCursorError:
+                    first_name = None
+                try:
+                    user_principal_name = member.userPrincipalName.value
+                except LDAPCursorError:
+                    user_principal_name = None
+                try:
+                    username = member.cn.value
+                except LDAPCursorError:
+                    username = None
+                try:
+                    mail = member.mail.value
+                except LDAPCursorError:
+                    mail = None
 
-                    if results.cn.value == cn:
+                member_data = {
+                    'employee_id': employee_id,
+                    'username': username,
+                    'last_name': last_name,
+                    'first_name': first_name,
+                    'user_principal_name': user_principal_name,
+                    'mail': mail,
+                }
 
-                        try:
-                            employee_id = results.employeeID.value
-                        except LDAPCursorError:
-                            employee_id = None
+                self.stdout.write("Found user {}!".format(cn))
 
-                        try:
-                            last_name = results.sn.value
-                        except LDAPCursorError:
-                            last_name = None
-                        try:
-                            first_name = results.givenName.value
-                        except LDAPCursorError:
-                            first_name = None
-                        try:
-                            user_principal_name = results.userPrincipalName.value
-                        except LDAPCursorError:
-                            user_principal_name = None
-                        try:
-                            username = results.cn.value
-                        except LDAPCursorError:
-                            username = None
-                        try:
-                            mail = results.mail.value
-                        except LDAPCursorError:
-                            mail = None
+                return member_data
 
-                        member_data = {
-                            'employee_id': employee_id,
-                            'username': username,
-                            'last_name': last_name,
-                            'first_name': first_name,
-                            'user_principal_name': user_principal_name,
-                            'mail': mail,
-                        }
-
-                        self.stdout.write("Found user!")
-
-                        return member_data
-
-        self.stdout.write("User not found on any AD list checked...")
+        self.stdout.write("User {} not found on {}'s user list...")
         return None
 
     def add_arguments(self, parser):
@@ -102,6 +91,15 @@ class Command(BaseCommand):
                     parent_institute, pi_cn, \
                     url = line.rstrip("\n").split("\t")
 
+                if parent_institute:
+
+                    try:
+                        institute = Institute.objects.get(short_name=parent_institute)
+                    except Institute.DoesNotExist:
+                        institute = None
+                else:
+                    institute = None
+
                 if pi_cn:
 
                     try:
@@ -110,7 +108,34 @@ class Command(BaseCommand):
 
                     except User.DoesNotExist:
 
-                        pi_data = self.get_ldap_credentials(pi_cn)
+                        pi_data = None
+
+                        if parent_institute:
+
+                            pi_data = self.get_ldap_credentials(pi_cn, parent_institute)
+
+                        if not pi_data:
+
+                            if not parent_institute:
+
+                                self.stdout.write("User {} does not have a listed institute, "
+                                                  "checking on all the institutes...".format(pi_cn,))
+
+                            else:
+                                self.stdout.write("Could not find PI info for user {} in their listed institute ({}), "
+                                                  "trying in other institutes...".format(pi_cn, parent_institute))
+
+                            institutes = Institute.objects.all().values_list('short_name', flat=True)
+
+                            for curr_institute in institutes:
+
+                                if curr_institute == parent_institute:
+                                    continue  # Dont check twice
+
+                                pi_data = self.get_ldap_credentials(pi_cn, parent_institute)
+
+                                if pi_data:
+                                    break
 
                         if not pi_data:
 
@@ -133,16 +158,8 @@ class Command(BaseCommand):
                             )
 
                 else:
+
                     pi = None
-
-                if parent_institute:
-
-                    try:
-                        institute = Institute.objects.get(short_name=parent_institute)
-                    except Institute.DoesNotExist:
-                        institute = None
-                else:
-                    institute = None
 
                 ResearchGroup.objects.create(
                     code=code if code else None,
