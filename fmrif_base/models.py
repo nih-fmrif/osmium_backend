@@ -163,6 +163,7 @@ class Institute(models.Model):
     short_name = models.CharField(max_length=10, primary_key=True)
     name = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
+    url = models.TextField(max_length=300, blank=True, null=True)
 
 
 class ResearchGroup(Group):
@@ -182,6 +183,6 @@ class ResearchGroup(Group):
                                          on_delete=models.PROTECT,
                                          related_name='research_groups',
                                          null=True)
-    url = models.URLField(max_length=300, blank=True, null=True)
+    url = models.TextField(max_length=300, blank=True, null=True)
     members = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='group_memberships')
     is_active = models.BooleanField(default=True)
