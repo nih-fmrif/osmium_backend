@@ -146,8 +146,8 @@ class Command(BaseCommand):
 
                 ResearchGroup.objects.create(
                     code=code if code else None,
-                    name=name if name else old_name,
-                    old_name=old_name if name else None,
+                    name=name.strip('"') if name else old_name,
+                    old_name=old_name.strip('"') if name else None,
                     short_name=short_name if short_name else None,
                     principal_investigator=pi,
                     parent_institute=institute,
