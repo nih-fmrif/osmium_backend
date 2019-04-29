@@ -69,7 +69,7 @@ class Command(BaseCommand):
 
                 return member_data
 
-        self.stdout.write("User {} not found on {}'s user list...")
+        self.stdout.write("User {} not found on {}'s user list...".format(cn, institute))
         return None
 
     def add_arguments(self, parser):
