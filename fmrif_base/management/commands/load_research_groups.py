@@ -81,12 +81,13 @@ class Command(BaseCommand):
 
         groups_fpath = Path(options['research_groups'])
 
-        with open(groups_fpath, "rt") as infile:
+        with open(groups_fpath, "rb") as infile:
 
             for line in infile:
 
                 code, old_name, name, short_name, is_active, \
-                    parent_institute, pi_cn, url = line.rstrip("\n").split("\t")
+                    parent_institute, pi_cn, \
+                    url = str(line.decode('iso-8859-1').encode('utf8')).rstrip("\n").split("\t")
 
                 if pi_cn:
 
