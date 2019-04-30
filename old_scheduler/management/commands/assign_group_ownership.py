@@ -217,17 +217,19 @@ class Command(BaseCommand):
 
             if len(assignment) > 1:
 
-                self.stdout.write("WARNING: Unable to assign exam to group - several matching"
-                                  "time overlap percentages with scheduler: ")
+                self.stdout.write("WARNING: Unable to assign exam pk {} ({}) to group - several matching"
+                                  "time overlap percentages with scheduler: ".format(exam.pk, exam.filepath))
                 for a in assignment:
                     self.stdout.write("deptcode: '{}', start_dt: {}, "
                                       "end_dt: {}, overlap %: {}".format(a[0], a[1], a[2], a[3]))
 
             elif len(assignment) == 1:
 
-                self.stdout.write("Exam pk {} assigned to deptcode: '{}', overlap: {}".format(
-                    exam.pk, assignment[0][0], assignment[0][-1]))
+                self.stdout.write("Exam pk {} ({}) assigned to deptcode: '{}', overlap: {}".format(
+                    exam.pk, exam.filepath, assignment[0][0], assignment[0][-1]))
 
             else:
 
-                self.stdout.write("ERROR: No assignments found for exam pk {}".format(exam.pk))
+                self.stdout.write("ERROR: No assignments found for exam pk {} ({})".format(exam.pk, exam.filepath))
+
+            self.stdout.flush()
