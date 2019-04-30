@@ -233,3 +233,5 @@ class Command(BaseCommand):
                 else:
 
                     outfile.write("ERROR: No assignments found for exam pk {} ({})\n".format(exam.pk, exam.filepath))
+
+            outfile.flush()
