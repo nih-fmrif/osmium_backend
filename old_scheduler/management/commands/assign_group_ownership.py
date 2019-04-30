@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from fmrif_archive.models import Exam
 import pandas as pd
+import rapidjson as json
 
 
 FMRIF_SCANNERS = [
@@ -219,11 +220,13 @@ class Command(BaseCommand):
 
                 if len(assignment) > 1:
 
-                    outfile.write("WARNING: Unable to assign exam pk {} ({}) to group - several matching"
-                                      "time overlap percentages with scheduler: \n".format(exam.pk, exam.filepath))
-                    for a in assignment:
-                        outfile.write("deptcode: '{}', start_dt: {}, "
-                                          "end_dt: {}, overlap %: {}\n".format(a[0], a[1], a[2], a[3]))
+                    outfile.write("WARNING: Unable to assign exam pk {} ({}) to group - several matching "
+                                  "times overlap percentages with scheduler: \n".format(exam.pk, exam.filepath))
+                    for key, block in blocks.items():
+                        block.pop('dt_range', None)
+
+                    outfile.write(json.dumps(blocks, indent=4,
+                                             default=lambda x: x.__str__() if isinstance(x, datetime) else x))
 
                 elif len(assignment) == 1:
 
