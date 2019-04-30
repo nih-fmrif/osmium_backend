@@ -129,7 +129,7 @@ class Command(BaseCommand):
             exam_dt_range = [(min_exam_dt + timedelta(seconds=i)) for i in range(exam_delta.seconds + 1)]
 
             schedule_mask = ((curr_schedule['datetime'] >= min_exam_dt) & (curr_schedule['datetime'] <= max_exam_dt) &
-                             (curr_schedule['fmrif_scanner'] == "fmrif3ta"))
+                             (curr_schedule['fmrif_scanner'] == scanner))
 
             scheduler_entries = curr_schedule[schedule_mask]
 
