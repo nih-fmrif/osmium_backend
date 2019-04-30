@@ -121,17 +121,22 @@ class Command(BaseCommand):
 
                 exam_datetimes.append(datetime.combine(exam.study_date, exam.study_time))
 
-                min_exam_dt = min(exam_datetimes).replace(microsecond=0, second=0, minute=0)
+                min_exam_actual_dt = min(exam_datetimes)
 
-                max_exam_dt = max(exam_datetimes).replace(microsecond=0, second=0, minute=0) + timedelta(hours=1)
+                max_exam_actual_dt = max(exam_datetimes)
 
-                exam_hours_range = pd.date_range(start=min_exam_dt, end=max_exam_dt, freq="H")
+                min_exam_hours_dt = min_exam_actual_dt.replace(microsecond=0, second=0, minute=0)
 
-                exam_delta = max_exam_dt - min_exam_dt
+                max_exam_hours_dt = max_exam_actual_dt.replace(microsecond=0, second=0, minute=0) + timedelta(hours=1)
 
-                exam_dt_range = [(min_exam_dt + timedelta(seconds=i)) for i in range(exam_delta.seconds + 1)]
+                exam_hours_range = pd.date_range(start=min_exam_hours_dt, end=max_exam_hours_dt, freq="H")
 
-                schedule_mask = ((curr_schedule['datetime'] >= min_exam_dt) & (curr_schedule['datetime'] <= max_exam_dt) &
+                exam_delta = max_exam_actual_dt - min_exam_actual_dt
+
+                exam_dt_range = [(min_exam_actual_dt + timedelta(seconds=i)) for i in range(exam_delta.seconds + 1)]
+
+                schedule_mask = ((curr_schedule['datetime'] >= min_exam_hours_dt) &
+                                 (curr_schedule['datetime'] <= max_exam_hours_dt) &
                                  (curr_schedule['fmrif_scanner'] == scanner))
 
                 scheduler_entries = curr_schedule[schedule_mask]
