@@ -121,9 +121,9 @@ class Command(BaseCommand):
 
                 exam_datetimes.append(datetime.combine(exam.study_date, exam.study_time))
 
-                min_exam_actual_dt = min(exam_datetimes)
+                min_exam_actual_dt = min(exam_datetimes).replace(microsecond=0)
 
-                max_exam_actual_dt = max(exam_datetimes)
+                max_exam_actual_dt = max(exam_datetimes).replace(microsecond=0)
 
                 min_exam_hours_dt = min_exam_actual_dt.replace(microsecond=0, second=0, minute=0)
 
@@ -185,6 +185,7 @@ class Command(BaseCommand):
                 # Compute the time ranges for each block, based on obtained start/end datetimes
                 for key in blocks.keys():
                     curr_delta = blocks[key]['end_dt'] - blocks[key]['start_dt']
+
                     blocks[key]["dt_range"] = [(blocks[key]['start_dt'] + timedelta(seconds=i)) for i in
                                                range(curr_delta.seconds + 1)]
 
@@ -192,6 +193,7 @@ class Command(BaseCommand):
                 for key in blocks.keys():
 
                     overlap_count = 0
+
                     for dt in exam_dt_range:
 
                         if dt in blocks[key]["dt_range"]:
@@ -226,12 +228,12 @@ class Command(BaseCommand):
                 if len(assignment) > 1:
 
                     outfile.write("WARNING: Unable to assign exam pk {} ({}) to group - several matching "
-                                  "times overlap percentages with scheduler: \n".format(exam.pk, exam.filepath))
+                          "times overlap percentages with scheduler: \n".format(exam.pk, exam.filepath))
                     for key, block in blocks.items():
                         block.pop('dt_range', None)
 
                     outfile.write(json.dumps(blocks, indent=4,
-                                             default=lambda x: x.__str__() if isinstance(x, datetime) else x))
+                                  default=lambda x: x.__str__() if isinstance(x, datetime) else x))
 
                 elif len(assignment) == 1:
 
