@@ -52,6 +52,13 @@ class Command(BaseCommand):
             required=True,
         )
 
+        parser.add_argument(
+            "--debug",
+            help="Output debug statements",
+            action='store_true',
+            default=False
+        )
+
     def handle(self, *args, **options):
 
         time_fmt = "%m%d%Y"
@@ -228,7 +235,8 @@ class Command(BaseCommand):
                 if len(assignment) > 1:
 
                     outfile.write("WARNING: Unable to assign exam pk {} ({}) to group - several matching "
-                          "times overlap percentages with scheduler: \n".format(exam.pk, exam.filepath))
+                                  "times overlap percentages with scheduler: \n".format(exam.pk, exam.filepath))
+
                     for key, block in blocks.items():
                         block.pop('dt_range', None)
 
@@ -240,8 +248,22 @@ class Command(BaseCommand):
                     outfile.write("Exam pk {} ({}) assigned to deptcode: '{}', overlap: {}\n".format(
                         exam.pk, exam.filepath, assignment[0][0], assignment[0][-1]))
 
+                    if options['debug']:
+
+                        for key, block in blocks.items():
+                            block.pop('dt_range', None)
+
+                        outfile.write("{}\n".format(json.dumps(blocks, indent=4,
+                                                    default=lambda x: x.__str__() if isinstance(x, datetime) else x)))
+
                 else:
 
                     outfile.write("ERROR: No assignments found for exam pk {} ({})\n".format(exam.pk, exam.filepath))
+
+                    for key, block in blocks.items():
+                        block.pop('dt_range', None)
+
+                    outfile.write("{}\n".format(
+                        json.dumps(blocks, indent=4, default=lambda x: x.__str__() if isinstance(x, datetime) else x)))
 
                 outfile.flush()
