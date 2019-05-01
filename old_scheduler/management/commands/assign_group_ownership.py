@@ -121,7 +121,7 @@ class Command(BaseCommand):
 
             for exam in exams:
 
-                outfile.write("Working on exam pk {}...".format(exam.pk))
+                outfile.write("Working on exam pk {}...\n".format(exam.pk))
 
                 if ("QA_" in exam.filepath) or ("QA-" in exam.filepath):
 
@@ -257,9 +257,10 @@ class Command(BaseCommand):
 
                         if research_codes:
 
-                            max_count = max(research_codes.values())
+                            max_count = max([v['count'] for v in research_codes.values()])
 
-                            final_assignment = [key for (key, value) in research_codes.items() if value == max_count]
+                            final_assignment = [key for (key, value) in research_codes.items() if
+                                                value['count'] == max_count]
 
                             if len(final_assignment) == 1:
 
@@ -267,6 +268,18 @@ class Command(BaseCommand):
 
                                 outfile.write("Exam pk {} ({}) assigned to deptcode: '{}', overlap: {}\n".format(
                                     exam.pk, exam.filepath, curr_key, research_codes[curr_key]['overlap']))
+
+                                if options['debug']:
+
+                                    for key, block in blocks.items():
+                                        block.pop('dt_range', None)
+
+                                    outfile.write("Min Exam Timestamp: {}\n".format(min_exam_actual_dt))
+                                    outfile.write("Max Exam Timestamp: {}\n".format(max_exam_actual_dt))
+
+                                    outfile.write("{}\n".format(
+                                        json.dumps(blocks, indent=4,
+                                                   default=lambda x: x.__str__() if isinstance(x, datetime) else x)))
 
                                 continue
 
@@ -277,7 +290,7 @@ class Command(BaseCommand):
                             block.pop('dt_range', None)
 
                         outfile.write(json.dumps(blocks, indent=4,
-                                         default=lambda x: x.__str__() if isinstance(x, datetime) else x))
+                                      default=lambda x: x.__str__() if isinstance(x, datetime) else x))
 
                     elif len(assignment) == 1:
 
