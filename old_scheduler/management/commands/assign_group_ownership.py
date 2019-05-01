@@ -140,6 +140,21 @@ class Command(BaseCommand):
                     exam_datetimes = [datetime.combine(dt[0], dt[1]) for dt in mr_scans_date_times if
                                       (dt[0] is not None and dt[1] is not None)]
 
+                    if (not exam_datetimes) or (not exam.study_time):
+
+                        outfile.write("WARNING: No exam times available for this exam. Unable to match to schedule.")
+
+                        outfile.write("Exam date: {}".format(exam.study_date))
+
+                        outfile.write("Exam time: {}".format(exam.study_time))
+
+                        outfile.write("Exam series times: {}".format(exam_datetimes))
+
+                        outfile.write("Exam pk {} ({}) assigned to deptcode: '{}', overlap: {}\n".format(
+                                      exam.pk, exam.filepath, "", "N/A"))
+
+                        continue
+
                     exam_datetimes.append(datetime.combine(exam.study_date, exam.study_time))
 
                     min_exam_actual_dt = min(exam_datetimes).replace(second=0, microsecond=0)
