@@ -121,148 +121,186 @@ class Command(BaseCommand):
 
             for exam in exams:
 
-                mr_scans_date_times = exam.mr_scans.values_list('series_date', 'series_time')
+                if "QA_" in exam.filepath:
 
-                exam_datetimes = [datetime.combine(dt[0], dt[1]) for dt in mr_scans_date_times if
-                                  (dt[0] is not None and dt[1] is not None)]
+                    outfile.write("Exam pk {} ({}) assigned to deptcode: '{}', "
+                                  "overlap: {}\n".format(exam.pk, exam.filepath, "DEV", "N/A"))
 
-                exam_datetimes.append(datetime.combine(exam.study_date, exam.study_time))
+                else:
 
-                min_exam_actual_dt = min(exam_datetimes).replace(second=0, microsecond=0)
+                    mr_scans_date_times = exam.mr_scans.values_list('series_date', 'series_time')
 
-                max_exam_actual_dt = max(exam_datetimes).replace(second=0, microsecond=0) + timedelta(minutes=1)
+                    exam_datetimes = [datetime.combine(dt[0], dt[1]) for dt in mr_scans_date_times if
+                                      (dt[0] is not None and dt[1] is not None)]
 
-                min_exam_hours_dt = min_exam_actual_dt.replace(microsecond=0, second=0, minute=0)
+                    exam_datetimes.append(datetime.combine(exam.study_date, exam.study_time))
 
-                max_exam_hours_dt = max_exam_actual_dt.replace(microsecond=0, second=0, minute=0) + timedelta(hours=1)
+                    min_exam_actual_dt = min(exam_datetimes).replace(second=0, microsecond=0)
 
-                exam_hours_range = pd.date_range(start=min_exam_hours_dt, end=max_exam_hours_dt, freq="H")
+                    max_exam_actual_dt = max(exam_datetimes).replace(second=0, microsecond=0) + timedelta(minutes=1)
 
-                exam_dt_range = pd.date_range(start=min_exam_actual_dt, end=max_exam_actual_dt, freq="min")
+                    min_exam_hours_dt = min_exam_actual_dt.replace(microsecond=0, second=0, minute=0)
 
-                schedule_mask = ((curr_schedule['datetime'] >= min_exam_hours_dt) &
-                                 (curr_schedule['datetime'] <= max_exam_hours_dt) &
-                                 (curr_schedule['fmrif_scanner'] == scanner))
+                    max_exam_hours_dt = max_exam_actual_dt.replace(microsecond=0, second=0, minute=0) + timedelta(hours=1)
 
-                scheduler_entries = curr_schedule[schedule_mask]
+                    exam_hours_range = pd.date_range(start=min_exam_hours_dt, end=max_exam_hours_dt, freq="H")
 
-                blocks = {}
-                curr_group = None
-                block_count = 0
+                    exam_dt_range = pd.date_range(start=min_exam_actual_dt, end=max_exam_actual_dt, freq="min")
 
-                for exam_hour in exam_hours_range:
+                    schedule_mask = ((curr_schedule['datetime'] >= min_exam_hours_dt) &
+                                     (curr_schedule['datetime'] <= max_exam_hours_dt) &
+                                     (curr_schedule['fmrif_scanner'] == scanner))
 
-                    hour_dt = datetime.fromtimestamp(exam_hour.timestamp())
+                    scheduler_entries = curr_schedule[schedule_mask]
 
-                    # Get schedule entry matching this hour
-                    curr_entry = scheduler_entries[scheduler_entries['datetime'] == hour_dt]
+                    blocks = {}
+                    curr_group = None
+                    block_count = 0
 
-                    if curr_entry.empty:
-                        curr_entry = {"group": "", "datetime": hour_dt}
-                    else:
-                        curr_entry = {"group": curr_entry['group'].values[0], "datetime": hour_dt}
+                    for exam_hour in exam_hours_range:
 
-                    if curr_entry['group'] != curr_group:
+                        hour_dt = datetime.fromtimestamp(exam_hour.timestamp())
 
-                        curr_group = curr_entry['group']
+                        # Get schedule entry matching this hour
+                        curr_entry = scheduler_entries[scheduler_entries['datetime'] == hour_dt]
 
-                        block_count += 1
+                        if curr_entry.empty:
+                            curr_entry = {"group": "", "datetime": hour_dt}
+                        else:
+                            curr_entry = {"group": curr_entry['group'].values[0], "datetime": hour_dt}
 
-                        blocks["{}".format(block_count)] = {
-                            "deptcode": curr_group,
-                            "start_dt": hour_dt,
-                            "end_dt": hour_dt.replace(minute=59, second=0),
-                            "overlap": 0,
-                        }
+                        if curr_entry['group'] != curr_group:
 
-                    else:
+                            curr_group = curr_entry['group']
 
-                        pos_start_dt = hour_dt
+                            block_count += 1
 
-                        pos_end_dt = hour_dt.replace(minute=59, second=0)
+                            blocks["{}".format(block_count)] = {
+                                "deptcode": curr_group,
+                                "start_dt": hour_dt,
+                                "end_dt": hour_dt.replace(minute=59, second=0),
+                                "overlap": 0,
+                            }
 
-                        if pos_start_dt < blocks["{}".format(block_count)]["start_dt"]:
-                            blocks["{}".format(block_count)]["start_dt"] = pos_start_dt
+                        else:
 
-                        if pos_end_dt > blocks["{}".format(block_count)]["end_dt"]:
-                            blocks["{}".format(block_count)]["end_dt"] = pos_end_dt
+                            pos_start_dt = hour_dt
 
-                # Compute the time ranges for each block, based on obtained start/end datetimes
-                for key in blocks.keys():
-                    blocks[key]["dt_range"] = pd.date_range(start=blocks[key]['start_dt'], end=blocks[key]['end_dt'],
-                                                            freq="min")
+                            pos_end_dt = hour_dt.replace(minute=59, second=0)
 
-                # Compute the overlaps for each block
-                for key in blocks.keys():
+                            if pos_start_dt < blocks["{}".format(block_count)]["start_dt"]:
+                                blocks["{}".format(block_count)]["start_dt"] = pos_start_dt
 
-                    overlap_count = 0
+                            if pos_end_dt > blocks["{}".format(block_count)]["end_dt"]:
+                                blocks["{}".format(block_count)]["end_dt"] = pos_end_dt
 
-                    for dt in exam_dt_range:
+                    # Compute the time ranges for each block, based on obtained start/end datetimes
+                    for key in blocks.keys():
+                        blocks[key]["dt_range"] = pd.date_range(start=blocks[key]['start_dt'], end=blocks[key]['end_dt'],
+                                                                freq="min")
 
-                        if dt in blocks[key]["dt_range"]:
-                            overlap_count += 1
+                    # Compute the overlaps for each block
+                    for key in blocks.keys():
 
-                    blocks[key]['overlap'] = overlap_count / len(blocks[key]['dt_range'])
+                        overlap_count = 0
 
-                # Calculate group assignment based on max overlap
-                assignment = []
-                for key in blocks.keys():
-                    if not assignment:
-                        assignment.append(
-                            (
-                                blocks[key]['deptcode'], blocks[key]['start_dt'],
-                                blocks[key]['end_dt'], blocks[key]['overlap']
-                            )
-                        )
-                    else:
-                        if blocks[key]['overlap'] > assignment[-1][-1]:
-                            assignment[-1] = (
-                                blocks[key]['deptcode'], blocks[key]['start_dt'],
-                                blocks[key]['end_dt'], blocks[key]['overlap']
-                            )
-                        elif blocks[key]['overlap'] == assignment[-1][-1]:
+                        for dt in exam_dt_range:
+
+                            if dt in blocks[key]["dt_range"]:
+                                overlap_count += 1
+
+                        blocks[key]['overlap'] = overlap_count / len(blocks[key]['dt_range'])
+
+                    # Calculate group assignment based on max overlap
+                    assignment = []
+                    for key in blocks.keys():
+                        if not assignment:
                             assignment.append(
                                 (
                                     blocks[key]['deptcode'], blocks[key]['start_dt'],
                                     blocks[key]['end_dt'], blocks[key]['overlap']
                                 )
                             )
+                        else:
+                            if blocks[key]['overlap'] > assignment[-1][-1]:
+                                assignment[-1] = (
+                                    blocks[key]['deptcode'], blocks[key]['start_dt'],
+                                    blocks[key]['end_dt'], blocks[key]['overlap']
+                                )
+                            elif blocks[key]['overlap'] == assignment[-1][-1]:
+                                assignment.append(
+                                    (
+                                        blocks[key]['deptcode'], blocks[key]['start_dt'],
+                                        blocks[key]['end_dt'], blocks[key]['overlap']
+                                    )
+                                )
 
-                if len(assignment) > 1:
+                    if len(assignment) > 1:
 
-                    outfile.write("WARNING: Unable to assign exam pk {} ({}) to group - several matching "
-                                  "times overlap percentages with scheduler: \n".format(exam.pk, exam.filepath))
+                        research_codes = {}
 
-                    for key, block in blocks.items():
-                        block.pop('dt_range', None)
+                        non_research_codes = ["", "DEV", "UNAVAIL", "GE", "SIEM", "test", "training", "post"]
 
-                    outfile.write(json.dumps(blocks, indent=4,
-                                  default=lambda x: x.__str__() if isinstance(x, datetime) else x))
+                        for a in assignment:
 
-                elif len(assignment) == 1:
+                            if a[0] not in non_research_codes:
 
-                    outfile.write("Exam pk {} ({}) assigned to deptcode: '{}', overlap: {}\n".format(
-                        exam.pk, exam.filepath, assignment[0][0], assignment[0][-1]))
+                                if a[0] not in research_codes.keys():
+                                    research_codes[a[0]] = {
+                                        'count': 1,
+                                        'overlap': a[-1]
+                                    }
+                                else:
+                                    research_codes[a[0]]['count'] += 1
 
-                    if options['debug']:
+                        if research_codes:
+
+                            max_count = max(research_codes.values())
+
+                            final_assignment = [key for (key, value) in research_codes.items() if value == max_count]
+
+                            if len(final_assignment) == 1:
+
+                                curr_key = final_assignment[0]
+
+                                outfile.write("Exam pk {} ({}) assigned to deptcode: '{}', overlap: {}\n".format(
+                                    exam.pk, exam.filepath, curr_key, research_codes[curr_key]['overlap']))
+
+                                continue
+
+                        outfile.write("WARNING: Unable to assign exam pk {} ({}) to group - several matching "
+                                      "times overlap percentages with scheduler: \n".format(exam.pk, exam.filepath))
 
                         for key, block in blocks.items():
                             block.pop('dt_range', None)
 
-                        outfile.write("Min Exam Timestamp: {}\n".format(min_exam_actual_dt))
-                        outfile.write("Max Exam Timestamp: {}\n".format(max_exam_actual_dt))
+                        print(json.dumps(blocks, indent=4,
+                                         default=lambda x: x.__str__() if isinstance(x, datetime) else x))
 
-                        outfile.write("{}\n".format(json.dumps(blocks, indent=4,
-                                                    default=lambda x: x.__str__() if isinstance(x, datetime) else x)))
+                    elif len(assignment) == 1:
 
-                else:
+                        outfile.write("Exam pk {} ({}) assigned to deptcode: '{}', overlap: {}\n".format(
+                            exam.pk, exam.filepath, assignment[0][0], assignment[0][-1]))
 
-                    outfile.write("ERROR: No assignments found for exam pk {} ({})\n".format(exam.pk, exam.filepath))
+                        if options['debug']:
 
-                    for key, block in blocks.items():
-                        block.pop('dt_range', None)
+                            for key, block in blocks.items():
+                                block.pop('dt_range', None)
 
-                    outfile.write("{}\n".format(
-                        json.dumps(blocks, indent=4, default=lambda x: x.__str__() if isinstance(x, datetime) else x)))
+                            outfile.write("Min Exam Timestamp: {}\n".format(min_exam_actual_dt))
+                            outfile.write("Max Exam Timestamp: {}\n".format(max_exam_actual_dt))
 
-                outfile.flush()
+                            outfile.write("{}\n".format(json.dumps(blocks, indent=4,
+                                                        default=lambda x: x.__str__() if isinstance(x, datetime) else x)))
+
+                    else:
+
+                        outfile.write("ERROR: No assignments found for exam pk {} ({})\n".format(exam.pk, exam.filepath))
+
+                        for key, block in blocks.items():
+                            block.pop('dt_range', None)
+
+                        outfile.write("{}\n".format(
+                            json.dumps(blocks, indent=4, default=lambda x: x.__str__() if isinstance(x, datetime) else x)))
+
+                    outfile.flush()
