@@ -274,7 +274,7 @@ class Command(BaseCommand):
                         for key, block in blocks.items():
                             block.pop('dt_range', None)
 
-                        print(json.dumps(blocks, indent=4,
+                        outfile.write(json.dumps(blocks, indent=4,
                                          default=lambda x: x.__str__() if isinstance(x, datetime) else x))
 
                     elif len(assignment) == 1:
