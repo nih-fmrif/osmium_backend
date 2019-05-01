@@ -102,25 +102,25 @@ class Command(BaseCommand):
             exams = Exam.objects.filter(Q(station_name=scanner) &
                                         Q(study_date__gte=from_date) &
                                         Q(study_date__lte=to_date)
-                                        ).prefetch_related('mr_scans').order_by('+study_date', '+study_time')
+                                        ).prefetch_related('mr_scans').order_by('study_date', 'study_time')
 
         elif from_date:
 
             exams = Exam.objects.filter(Q(station_name=scanner) &
                                         Q(study_date__gte=from_date)
-                                        ).prefetch_related('mr_scans').order_by('+study_date', '+study_time')
+                                        ).prefetch_related('mr_scans').order_by('study_date', 'study_time')
 
         elif to_date:
 
             exams = Exam.objects.filter(Q(station_name=scanner) &
                                         Q(study_date__lte=to_date)
-                                        ).prefetch_related('mr_scans').order_by('+study_date', '+study_time')
+                                        ).prefetch_related('mr_scans').order_by('study_date', 'study_time')
 
         else:
 
             exams = Exam.objects.filter(
                 station_name=scanner
-            ).prefetch_related('mr_scans').order_by('+study_date', '+study_time')
+            ).prefetch_related('mr_scans').order_by('study_date', 'study_time')
 
         with open("{}_sched_matching_from_{}_to_{}.txt".format(scanner, from_date, to_date), "wt") as outfile:
 
