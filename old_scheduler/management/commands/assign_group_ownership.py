@@ -121,6 +121,8 @@ class Command(BaseCommand):
 
             for exam in exams:
 
+                outfile.write("Working on exam pk {}...".format(exam.pk))
+
                 if ("QA_" in exam.filepath) or ("QA-" in exam.filepath):
 
                     outfile.write("Exam pk {} ({}) assigned to deptcode: '{}', "
