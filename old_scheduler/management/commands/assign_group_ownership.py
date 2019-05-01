@@ -253,6 +253,9 @@ class Command(BaseCommand):
                         for key, block in blocks.items():
                             block.pop('dt_range', None)
 
+                        outfile.write("Min Exam Timestamp: {}\n".format(min_exam_actual_dt))
+                        outfile.write("Max Exam Timestamp: {}\n".format(max_exam_actual_dt))
+
                         outfile.write("{}\n".format(json.dumps(blocks, indent=4,
                                                     default=lambda x: x.__str__() if isinstance(x, datetime) else x)))
 
