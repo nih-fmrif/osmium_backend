@@ -128,9 +128,9 @@ class Command(BaseCommand):
 
                 exam_datetimes.append(datetime.combine(exam.study_date, exam.study_time))
 
-                min_exam_actual_dt = min(exam_datetimes).replace(microsecond=0)
+                min_exam_actual_dt = min(exam_datetimes).replace(second=0, microsecond=0)
 
-                max_exam_actual_dt = max(exam_datetimes).replace(microsecond=0)
+                max_exam_actual_dt = max(exam_datetimes).replace(second=0, microsecond=0) + timedelta(minutes=1)
 
                 min_exam_hours_dt = min_exam_actual_dt.replace(microsecond=0, second=0, minute=0)
 
@@ -138,9 +138,7 @@ class Command(BaseCommand):
 
                 exam_hours_range = pd.date_range(start=min_exam_hours_dt, end=max_exam_hours_dt, freq="H")
 
-                exam_delta = max_exam_actual_dt - min_exam_actual_dt
-
-                exam_dt_range = [(min_exam_actual_dt + timedelta(seconds=i)) for i in range(exam_delta.seconds + 1)]
+                exam_dt_range = pd.date_range(start=min_exam_actual_dt, end=max_exam_actual_dt, freq="min")
 
                 schedule_mask = ((curr_schedule['datetime'] >= min_exam_hours_dt) &
                                  (curr_schedule['datetime'] <= max_exam_hours_dt) &
@@ -173,7 +171,7 @@ class Command(BaseCommand):
                         blocks["{}".format(block_count)] = {
                             "deptcode": curr_group,
                             "start_dt": hour_dt,
-                            "end_dt": hour_dt.replace(minute=59, second=59),
+                            "end_dt": hour_dt.replace(minute=59, second=0),
                             "overlap": 0,
                         }
 
@@ -181,7 +179,7 @@ class Command(BaseCommand):
 
                         pos_start_dt = hour_dt
 
-                        pos_end_dt = hour_dt.replace(minute=59, second=59)
+                        pos_end_dt = hour_dt.replace(minute=59, second=0)
 
                         if pos_start_dt < blocks["{}".format(block_count)]["start_dt"]:
                             blocks["{}".format(block_count)]["start_dt"] = pos_start_dt
@@ -191,10 +189,8 @@ class Command(BaseCommand):
 
                 # Compute the time ranges for each block, based on obtained start/end datetimes
                 for key in blocks.keys():
-                    curr_delta = blocks[key]['end_dt'] - blocks[key]['start_dt']
-
-                    blocks[key]["dt_range"] = [(blocks[key]['start_dt'] + timedelta(seconds=i)) for i in
-                                               range(curr_delta.seconds + 1)]
+                    blocks[key]["dt_range"] = pd.date_range(start=blocks[key]['start_dt'], end=blocks[key]['end_dt'],
+                                                            freq="min")
 
                 # Compute the overlaps for each block
                 for key in blocks.keys():
