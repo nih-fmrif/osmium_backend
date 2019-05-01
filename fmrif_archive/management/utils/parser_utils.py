@@ -272,7 +272,10 @@ def parse_private_data(dicom_dataset):
 
         if "siemens" in manufacturer.lower():
 
-            siemens_header = get_csa_header(dicom_dataset)
+            try:
+                siemens_header = get_csa_header(dicom_dataset)
+            except:
+                siemens_header = None
 
             if siemens_header:
 
