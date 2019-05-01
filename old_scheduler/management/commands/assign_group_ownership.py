@@ -121,7 +121,7 @@ class Command(BaseCommand):
 
             for exam in exams:
 
-                if "QA_" in exam.filepath:
+                if ("QA_" in exam.filepath) or ("QA-" in exam.filepath):
 
                     outfile.write("Exam pk {} ({}) assigned to deptcode: '{}', "
                                   "overlap: {}\n".format(exam.pk, exam.filepath, "DEV", "N/A"))
