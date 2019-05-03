@@ -1,16 +1,17 @@
 from rest_framework import serializers
 from fmrif_archive.models import (
     Exam,
-    BaseFileCollection,
     FileCollection,
     MRScan,
-    BaseFile,
     File,
     DICOMInstance,
+    MRBIDSAnnotation,
 )
+from fmrif_archive.mappings.json_mappings import DICOM_TAG_TO_NAME
+from pathlib import Path
 
 
-class FileSerializer(serializers.ModelSerializer):
+class FileInstanceSerializer(serializers.ModelSerializer):
 
     class Meta:
 
@@ -46,113 +47,211 @@ class DICOMInstanceSerializer(serializers.ModelSerializer):
         )
 
 
-class BaseFileSerializer(serializers.ModelSerializer):
-
-    class Meta:
-
-        model = BaseFile
-
-    def to_representation(self, obj):
-
-        if isinstance(obj, File):
-            return FileSerializer(obj, context=self.context).to_representation(obj)
-        elif isinstance(obj, DICOMInstance):
-            return DICOMInstanceSerializer(obj, context=self.context).to_representation(obj)
-
-
-class FileCollectionSerializer(serializers.ModelSerializer):
-
-    files = BaseFileSerializer(many=True, read_only=True)
-
-    class Meta:
-
-        model = FileCollection
-
-        fields = (
-            'name',
-            'num_files',
-            'files',
-        )
-
-        read_only_fields = (
-            'name',
-            'num_files',
-            'files',
-        )
-
-
-class GEMinimalMetaSerializer(serializers.ModelSerializer):
-
-    class Meta:
-
-        fields = (
-            'slice_indexes',
-            'image_position_patient',
-            'num_indices',
-            'num_slices',
-        )
-
-        read_only_fields = (
-            'slice_indexes',
-            'image_position_patient',
-            'num_indices',
-            'num_slices',
-        )
-
-
-class MRScanSerializer(serializers.ModelSerializer):
-
-    files = BaseFileSerializer(many=True, read_only=True)
-    minimal_metadata = GEMinimalMetaSerializer(read_only=True)
+class MRScanPreviewSerializer(serializers.ModelSerializer):
 
     class Meta:
 
         model = MRScan
 
         fields = (
+            'id',
             'name',
             'num_files',
-            'files',
-            'series_date',
-            'series_time',
             'series_description',
-            'sop_class_uid',
-            'series_instance_uid',
-            'series_number',
-            'minimal_metadata',
         )
 
         read_only_fields = (
+            'id',
             'name',
             'num_files',
-            'files',
+            'series_description',
+        )
+
+
+class MRBIDSAnnotationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+
+        model = MRBIDSAnnotation
+
+        fields = (
+            'scan_type',
+            'modality',
+            'acquisition_label',
+            'contrast_enhancement_label',
+            'reconstruction_label',
+            'is_defacemask',
+            'task_label',
+            'phase_encoding_direction',
+            'echo_number',
+            'is_sbref',
+        )
+
+        read_only_fields = (
+            'scan_type',
+            'modality',
+            'acquisition_label',
+            'contrast_enhancement_label',
+            'reconstruction_label',
+            'is_defacemask',
+            'task_label',
+            'phase_encoding_direction',
+            'echo_number',
+            'is_sbref',
+        )
+
+
+class MRScanSerializer(serializers.ModelSerializer):
+
+    exam_id = serializers.CharField(source="parent_exam.exam_id", read_only=True)
+    exam_revision = serializers.IntegerField(source="parent_exam.revision", read_only=True)
+    exam_patient_name = serializers.CharField(source="parent_exam.name", read_only=True)
+    exam_study_id = serializers.CharField(source="parent_exam.study_id", read_only=True)
+    exam_filename = serializers.CharField(source="parent_exam.filepath", read_only=True)
+    exam_station_name = serializers.CharField(source="parent_exam.station_name", read_only=True)
+    dicom_files = DICOMInstanceSerializer(many=True, read_only=True)
+    bids_annotation = MRBIDSAnnotationSerializer(read_only=True)
+
+    class Meta:
+
+        model = MRScan
+
+        fields = (
+            'id',
+            'exam_id',
+            'exam_revision',
+            'exam_patient_name',
+            'exam_study_id',
+            'exam_filename',
+            'exam_station_name',
+            'name',
+            'num_files',
             'series_date',
             'series_time',
             'series_description',
             'sop_class_uid',
             'series_instance_uid',
             'series_number',
-            'minimal_metadata',
+            'scan_sequence',
+            'dicom_metadata',
+            'private_dicom_metadata',
+            'dicom_files',
+            'bids_annotation',
         )
 
+        read_only_fields = (
+            'id',
+            'exam_id',
+            'exam_revision',
+            'exam_patient_name',
+            'exam_study_id',
+            'exam_filename',
+            'exam_station_name',
+            'name',
+            'num_files',
+            'series_date',
+            'series_time',
+            'series_description',
+            'sop_class_uid',
+            'series_instance_uid',
+            'series_number',
+            'scan_sequence',
+            'dicom_metadata',
+            'private_dicom_metadata',
+            'dicom_files',
+            'bids_annotation',
+        )
 
-class BaseFileCollectionSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+
+        data = super().to_representation(instance)
+
+        if not hasattr(instance, 'dicom_metadata'):
+            data['dicom_metadata'] = {}
+            return data
+
+        dicom_metadata = instance.dicom_metadata
+
+        for tag, attrs in dicom_metadata.items():
+
+            value = attrs.get('Value', None)
+            if value:
+                value = ", ".join([str(v) for v in value])
+
+            curr_tag = DICOM_TAG_TO_NAME.get(tag, None)
+            name = curr_tag.get('name', None) if curr_tag else None
+
+            dicom_metadata[tag] = {
+                'name': name,
+                'value': value,
+            }
+
+        data['dicom_metadata'] = dicom_metadata
+
+        if not hasattr(instance, 'bids_annotation'):
+            data['bids_annotation'] = {}
+
+        return data
+
+
+class FileCollectionPreviewSerializer(serializers.ModelSerializer):
 
     class Meta:
 
-        model = BaseFileCollection
+        model = FileCollection
 
-    def to_representation(self, obj):
+        fields = (
+            'id',
+            'name',
+            'num_files',
+        )
 
-        if isinstance(obj, FileCollection):
-            return FileCollectionSerializer(obj, context=self.context).to_representation(obj)
-        elif isinstance(obj, MRScan):
-            return MRScanSerializer(obj, context=self.context).to_representation(obj)
+        read_only_fields = (
+            'id',
+            'name',
+            'num_files',
+        )
+
+
+class FileCollectionSerializer(serializers.ModelSerializer):
+
+    exam_id = serializers.CharField(source="parent_exam.exam_id", read_only=True)
+    exam_revision = serializers.IntegerField(source="parent_exam.revision", read_only=True)
+    exam_patient_name = serializers.CharField(source="parent_exam.name", read_only=True)
+    exam_study_id = serializers.CharField(source="parent_exam.study_id", read_only=True)
+    files = FileInstanceSerializer(many=True, read_only=True)
+
+    class Meta:
+
+        model = FileCollection
+
+        fields = (
+            'id',
+            'exam_id',
+            'exam_revision',
+            'exam_patient_name',
+            'exam_study_id',
+            'name',
+            'num_files',
+            'files'
+        )
+
+        read_only_fields = (
+            'id',
+            'exam_id',
+            'exam_revision',
+            'exam_patient_name',
+            'exam_study_id',
+            'name',
+            'num_files',
+            'files'
+        )
 
 
 class ExamSerializer(serializers.ModelSerializer):
 
-    file_collections = BaseFileCollectionSerializer(many=True, read_only=True)
+    mr_scans = MRScanPreviewSerializer(many=True, read_only=True)
+    other_data = FileCollectionPreviewSerializer(many=True, read_only=True)
 
     class Meta:
 
@@ -160,10 +259,8 @@ class ExamSerializer(serializers.ModelSerializer):
 
         fields = (
             "exam_id",
-            "version",
-            "last_modified",
-            "oxygen_filename",
-            "oxygen_checksum",
+            "revision",
+            "created_on",
             "station_name",
             "study_instance_uid",
             "study_id",
@@ -176,18 +273,15 @@ class ExamSerializer(serializers.ModelSerializer):
             "first_name",
             "patient_id",
             "sex",
-            "weight",
-            "size",
             "birth_date",
-            "file_collections",
+            "mr_scans",
+            "other_data",
         )
 
         read_only_fields = (
             "exam_id",
-            "version",
-            "last_modified",
-            "oxygen_filename",
-            "oxygen_checksum",
+            "revision",
+            "created_on",
             "station_name",
             "study_instance_uid",
             "study_id",
@@ -200,8 +294,47 @@ class ExamSerializer(serializers.ModelSerializer):
             "first_name",
             "patient_id",
             "sex",
-            "weight",
-            "size",
             "birth_date",
-            "file_collections",
+            "mr_scans",
+            "other_data",
+        )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['filename'] = Path(instance.filepath).name
+        return data
+
+
+class ExamPreviewSerializer(serializers.ModelSerializer):
+
+    class Meta:
+
+        model = Exam
+
+        fields = (
+            "exam_id",
+            "revision",
+            "station_name",
+            "study_instance_uid",
+            "study_id",
+            "study_date",
+            "study_time",
+            "study_description",
+            "protocol",
+            "first_name",
+            "last_name",
+        )
+
+        read_only_fields = (
+            "exam_id",
+            "revision",
+            "station_name",
+            "study_instance_uid",
+            "study_id",
+            "study_date",
+            "study_time",
+            "study_description",
+            "protocol",
+            "first_name",
+            "last_name",
         )

@@ -1,5 +1,3 @@
-import uuid
-
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import (
@@ -149,6 +147,7 @@ class Protocol(models.Model):
                                                related_name='protocols_pi',
                                                on_delete=models.PROTECT,
                                                null=True)
+    research_group = models.ForeignKey('ResearchGroup', related_name='protocols', on_delete=models.PROTECT, null=True)
     is_active = models.BooleanField(default=True)
 
 
@@ -164,6 +163,7 @@ class Institute(models.Model):
     short_name = models.CharField(max_length=10, primary_key=True)
     name = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
+    url = models.TextField(max_length=300, blank=True, null=True)
 
 
 class ResearchGroup(Group):
@@ -183,23 +183,6 @@ class ResearchGroup(Group):
                                          on_delete=models.PROTECT,
                                          related_name='research_groups',
                                          null=True)
-    url = models.URLField(max_length=300, blank=True, null=True)
+    url = models.TextField(max_length=300, blank=True, null=True)
     members = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='group_memberships')
-    protocols = models.ManyToManyField(Protocol, related_name='groups_with_access')
     is_active = models.BooleanField(default=True)
-
-
-# class AccessRequest(models.Model):
-#
-#     STATUS_CHOICES = (
-#         ('in_progress', 'in_progress'),
-#         ('approved', 'approved'),
-#         ('denied', 'denied'),
-#     )
-#
-#     applicant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='applicant')
-#     sponsor_group = models.ForeignKey(ResearchGroup, on_delete=models.CASCADE, related_name='sponsor_group')
-#     application_key = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-#     application_status = models.CharField(default='in_progress', choices=STATUS_CHOICES, max_length=8)
-#     last_updated = models.DateTimeField(auto_now=True)
-#     summary = models.TextField(blank=True)

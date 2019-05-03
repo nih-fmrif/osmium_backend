@@ -203,6 +203,7 @@ Temporary Items
 # Project specific
 .keys
 osmium_backend/settings/osmium.py
+osmium_backend/settings/osmium_dev.py
 osmium_backend/settings/bromine.py
 osmium_backend/settings/dev.py
 migrations*
@@ -212,3 +213,4 @@ migrations*
 /bromine_server_config.txt
 
 fmrif_base/management/commands/load_users_from_ad.py
+fmrif_base/initial_data/res_groups.tsv

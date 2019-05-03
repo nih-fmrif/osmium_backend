@@ -1,17 +1,17 @@
 from ldap3 import Connection, Server, ALL
 from ldap3.core.exceptions import LDAPCursorError
+from django.conf import settings
 
 
 def get_ldap_credentials(employee_id):
     # Open LDAP connection
-    server = Server('ldap://nihdcadhub.nih.gov', use_ssl=True, get_info=ALL)
-    conn = Connection(server, "svc_fmrif_sso", 'periodicT@bl34j', auto_bind=True)
+    server = Server(settings.LDAP_SERVER, use_ssl=True, get_info=ALL)
+    conn = Connection(server, settings.FMRIF_SVC_ACCT, settings.FMRIF_SVC_ACCT_PWD, auto_bind=True)
     conn.start_tls()
 
     # Get the list of members with access to Gold
     members = None
-    if conn.search('CN=NINDS DIR NMRF DICOM WEB,OU=Groups,OU=DIR,OU=NINDS,OU=NIH,OU=AD,DC=nih,DC=gov', '(member=*)',
-                   attributes=['member']):
+    if conn.search(settings.AD_GROUPS['gold_users'], '(member=*)', attributes=['member']):
         members = conn.entries[0].member.value
 
     # Find the relevant metadata for the employee id of interest

@@ -1,9 +1,9 @@
 from django.urls import path
 
-from fmrif_base.views import UserAccount
+from fmrif_base.views import FMRIFUserView
 
-app_name = 'fmrif_archive'
+app_name = 'fmrif_base'
 
 urlpatterns = [
-    path('account/', UserAccount.as_view()),
+    path('user/', FMRIFUserView.as_view()),
 ]
