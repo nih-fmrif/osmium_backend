@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from pathlib import Path
 from pymongo.errors import PyMongoError
-from pymongo import InsertOne
+from pymongo import InsertOne, DESCENDING
 from datetime import datetime
 from datetime import time as datetime_time
 from fmrif_archive.utils import get_fmrif_scanner, parse_pn
@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
     help = 'Load study and scan metadata obtained from Oxygen/Gold archives'
 
-    def parse_attribute(self, tag, scan_name, attribute):
+    def parse_attribute(self, parent_exam, tag, scan_name, attribute):
 
         values = attribute.get('Value', None)
 
@@ -51,6 +51,7 @@ class Command(BaseCommand):
                 raise AttributeError
 
         return {
+            'parent_exam': parent_exam,
             'tag': tag,
             'value': new_value,
             'scan_name': scan_name,
@@ -70,29 +71,26 @@ class Command(BaseCommand):
 
         parser.add_argument("--database", type=str, default="image_archive")
 
-        parser.add_argument("--collection", type=str, default="mr_scans")
+        parser.add_argument("--exam_collection", type=str, default="mr_exams")
+
+        parser.add_argument("--tag_collection", type=str, default="dicom_tags")
 
     def handle(self, *args, **options):
 
         # Establish MongoDB connection
         client = settings.MONGO_CLIENT
         db = client[options['database']]
-        collection = db.get_collection(options['collection'])
+        exam_collection = db.get_collection(options['exam_collection'])
+        tag_collection = db.get_collection(options['tag_collection'])
 
-        # # Test whether the uniqueness constraint is defined, create it if not (this will only happen when collection
-        # # first created)
-        # if not collection.index_information().get('scan_uniqueness_constraint', None):
-        #
-        #     collection.create_index([
-        #         ('_metadata.exam_id', DESCENDING),
-        #         ('_metadata.revision', DESCENDING),
-        #         ('_metadata.scan_name', DESCENDING)
-        #     ], unique=True, name="scan_uniqueness_constraint")
-        #
-        # if not collection.index_information().get('study_date_idx', None):
-        #     collection.create_index([
-        #         ('_metadata.study_datetime', DESCENDING)
-        #     ], name="study_datetime_idx")
+        # Test whether the uniqueness constraint is defined, create it if not (this will only happen when collection
+        # first created)
+        if not exam_collection.index_information().get('exam_uniqueness_constraint', None):
+
+            exam_collection.create_index([
+                ('exam_id', DESCENDING),
+                ('revision', DESCENDING),
+            ], unique=True, name="exam_uniqueness_constraint")
 
         scanners = options['scanners']
         years = options['years']
@@ -133,13 +131,13 @@ class Command(BaseCommand):
 
                     for day_path in sorted(day_paths):
 
-                        exams_to_create = []
-
                         for exam_id in sorted([e for e in day_path.iterdir() if e.is_dir()]):
 
                             for pt_dir in sorted([p for p in exam_id.iterdir() if p.is_dir()]):
 
                                 for session_dir in sorted([s for s in pt_dir.iterdir() if s.is_dir()]):
+
+                                    tags_to_create = []
 
                                     study_metadata_files = list(session_dir.glob("study_*_metadata.txt"))
 
@@ -294,8 +292,9 @@ class Command(BaseCommand):
                                         'patient_id': patient_id,
                                         'sex': sex,
                                         'birth_date': birth_date,
-                                        'dicom_attributes': []
                                     }
+
+                                    new_exam_id = exam_collection.insert_one(new_exam).inserted_id
 
                                     study_data = study_metadata['data']
 
@@ -341,8 +340,8 @@ class Command(BaseCommand):
 
                                             try:
 
-                                                new_tag = self.parse_attribute(tag, scan_name, attr)
-                                                new_exam['dicom_attributes'].append(new_tag)
+                                                new_tag = self.parse_attribute(new_exam_id, tag, scan_name, attr)
+                                                tags_to_create.append(InsertOne(new_tag))
 
                                             except AttributeError:
                                                 self.stdout.write(
@@ -350,17 +349,15 @@ class Command(BaseCommand):
                                                     "scan of study {}".format(tag, scan_name, study_meta_file)
                                                 )
 
-                                    exams_to_create.append(InsertOne(new_exam))
+                                    try:
 
-                        try:
+                                        res = tag_collection.bulk_write(tags_to_create)
 
-                            res = collection.bulk_write(exams_to_create)
+                                        self.stdout.write("Inserted {} tags to collection".format(res.inserted_count))
 
-                            self.stdout.write("Inserted {} exams to collection".format(res.inserted_count))
+                                    except PyMongoError as e:
 
-                        except PyMongoError as e:
-
-                            self.stdout.write("Error: Unable to insert scan documents "
-                                              "for day ".format(day_path))
-                            self.stdout.write(e)
-                            self.stdout.write(traceback.format_exc())
+                                        self.stdout.write("Error: Unable to insert scan documents "
+                                                          "for day ".format(day_path))
+                                        self.stdout.write(e)
+                                        self.stdout.write(traceback.format_exc())

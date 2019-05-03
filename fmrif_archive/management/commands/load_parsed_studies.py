@@ -3,7 +3,6 @@ import traceback
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from django.db import transaction
 from django.db import Error as DjangoDBError
 from psycopg2 import Error as PgError
 from psycopg2 import Warning as PgWarning
@@ -11,9 +10,7 @@ from pathlib import Path
 from fmrif_archive.models import (
     Exam,
     MRScan,
-    DICOMInstance,
     FileCollection,
-    File
 )
 from datetime import datetime
 from fmrif_archive.utils import parse_pn, get_fmrif_scanner
