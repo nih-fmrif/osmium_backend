@@ -129,7 +129,14 @@ class Command(BaseCommand):
                                         self.stdout.write("Error: Required metadata field not "
                                                           "available for exam {}".format(study_meta_file))
                                         continue
-
+                                    
+                                    try:
+                                        exam = Exam.objects.get(exam_id=exam_id, revision=1)
+                                        self.stdout.write("Exam {} already has a database entry. Skipping.".format(exam_id))
+                                        continue
+                                    except Exam.DoesNotExist:
+                                        pass
+                                    
                                     try:
                                         station_name = get_fmrif_scanner(dicom_data["00081010"]["Value"][0])
                                     except (KeyError, IndexError):
@@ -243,7 +250,8 @@ class Command(BaseCommand):
 
                                     except PgWarning as w:
 
-                                        self.stdout.write("Warning: Postgres warning processing {}".format(study_meta_file))
+                                        self.stdout.write("Warning: Postgres warning "
+                                                          "processing {}".format(study_meta_file))
                                         self.stdout.write(w)
                                         self.stdout.write(traceback.format_exc())
 

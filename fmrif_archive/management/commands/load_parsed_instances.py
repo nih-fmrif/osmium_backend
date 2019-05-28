@@ -71,6 +71,25 @@ def process_dicom_instances(parent_exam, instance_files):
 
             image_position_patient = data['metadata'].get('image_position_patient',
                                                           None)
+        
+        try:
+
+            inst = DICOMInstance.objects.filter(
+                parent_scan=curr_scan,
+                file_type='dicom',
+                filename=filename,
+                checksum=data['checksum'],
+                echo_number=echo_number,
+                sop_instance_uid=sop_instance_uid,
+                slice_index=slice_index,
+                image_position_patient=image_position_patient
+            )
+            
+            if inst:
+                continue
+        
+        except DICOMInstance.DoesNotExist:
+            pass
 
         new_dicom_instances.append(
             DICOMInstance(
@@ -114,6 +133,21 @@ def process_file_instances(parent_exam, checksum_file):
     new_file_instances = []
 
     for filename, data in subdir_data.items():
+
+        try:
+            
+            f = File.objects.filter(
+                parent_collection=curr_subdir,
+                file_type='other',
+                filename=filename,
+                checksum=data['checksum']
+            )
+
+            if f:
+                continue
+        
+        except File.DoesNotExist:
+            pass
 
         new_file_instances.append(
             File(

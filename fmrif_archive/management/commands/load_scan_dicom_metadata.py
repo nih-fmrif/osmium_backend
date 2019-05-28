@@ -139,7 +139,7 @@ class Command(BaseCommand):
                                                 parent_exam__revision=revision,
                                                 name=scan_name
                                             )
-                                        except KeyError:
+                                        except (KeyError, MRScan.DoesNotExist):
 
                                             self.stdout.write(
                                                 "Error: Unable to load scan "
