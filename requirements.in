@@ -1,6 +1,6 @@
 pipreqs==0.4.9
 pip-tools==3.6.0
-django==2.2
+django==2.2.4
 djangorestframework==3.9.3
 psycopg2-binary==2.7.7
 gunicorn==19.9.0
